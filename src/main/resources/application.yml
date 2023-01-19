@@ -1,0 +1,38 @@
+server:
+  port: 8080
+
+spring:
+  config:
+    activate:
+      on-profile: default
+
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/learncha?characterEncoding=UTF-8&serverTimeZone=Asia/Seoul
+    username: root
+    password: 1234
+    hikari:
+      maximum-pool-size: 30
+      read-only: false
+      connection-timeout: 3000
+      connection-test-query: SELECT 1
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+
+  flyway:
+    user: root
+    password: 1234
+    url: jdbc:mysql://localhost:3306/learncha?characterEncoding=UTF-8&serverTimeZone=Asia/Seoul
+    enabled: true
+    baseline-on-migrate: true
+
+logging:
+  level:
+    com.zaxxer.hikari.pool.HikariPool: debug
