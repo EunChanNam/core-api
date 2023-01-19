@@ -1,7 +1,8 @@
-package com.learcha.learchaapp.member.domain;
+package com.learcha.learchaapp.auth.domain;
 
-import com.learcha.learchaapp.member.common.exception.InvalidParamException;
-import com.learcha.learchaapp.member.common.util.TokeGenerator;
+import com.learcha.learchaapp.common.abstractentity.TimeStamp;
+import com.learcha.learchaapp.common.exception.InvalidParamException;
+import com.learcha.learchaapp.common.util.TokeGenerator;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -16,13 +17,13 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
-
+@Getter
 @NoArgsConstructor
 @Entity
 @Table(name = "member")
-public class Member {
+public class Member extends TimeStamp {
 
-    private final String MEMBER_PREFIX = "mem";
+    private final static String MEMBER_PREFIX = "mem_";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -61,7 +62,7 @@ public class Member {
 
     @Getter
     @RequiredArgsConstructor
-    private enum Status {
+    public enum Status {
         NEED_AUTHENTICATED("인증 필요"),
         AUTHENTICATED("인증_완료"),
         EXPIRED("이메일 인증 만료");
@@ -70,9 +71,11 @@ public class Member {
     }
 
     @Getter
-    private enum AuthType {
-        EMAIL,
-        GOOGLE;
+    @RequiredArgsConstructor
+    public enum AuthType {
+        EMAIL("EMAIL"),
+        GOOGLE("GOOGLE");
+        private final String description;
     }
 
     @Getter

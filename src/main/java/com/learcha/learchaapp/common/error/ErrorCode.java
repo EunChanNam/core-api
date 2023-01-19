@@ -1,4 +1,4 @@
-package com.learcha.learchaapp.member.common.error;
+package com.learcha.learchaapp.common.error;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

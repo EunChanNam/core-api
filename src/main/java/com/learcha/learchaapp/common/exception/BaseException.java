@@ -1,6 +1,6 @@
-package com.learcha.learchaapp.member.common.exception;
+package com.learcha.learchaapp.common.exception;
 
-import com.learcha.learchaapp.member.common.error.ErrorCode;
+import com.learcha.learchaapp.common.error.ErrorCode;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor

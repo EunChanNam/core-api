@@ -1,7 +1,7 @@
-package com.learcha.learchaapp.member.common.exception.handler;
+package com.learcha.learchaapp.common.exception.handler;
 
-import com.learcha.learchaapp.member.common.error.ErrorResponse;
-import java.security.InvalidParameterException;
+import com.learcha.learchaapp.common.error.ErrorResponse;
+import com.learcha.learchaapp.common.exception.InvalidParamException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(InvalidParameterException.class)
-    public ErrorResponse handleInvalidParamException(InvalidParameterException ex) {
+    @ExceptionHandler(InvalidParamException.class)
+    public ErrorResponse handleInvalidParamException(InvalidParamException ex) {
         return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 

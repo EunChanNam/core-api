@@ -1,4 +1,4 @@
-package com.learcha.learchaapp.member.common.util;
+package com.learcha.learchaapp.common.util;
 
 import org.apache.commons.lang3.RandomStringUtils;
 

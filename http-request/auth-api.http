@@ -1,0 +1,11 @@
+###
+POST http://localhost:8080/api/auth
+Content-Type: application/json
+
+{
+  "firstName": "chang",
+  "lastName": "kim",
+  "email": "test-1234@gmail.com",
+  "password": "1234",
+  "authType": "EMAIL"
+}
