@@ -1,8 +1,8 @@
-package com.learcha.learchaapp.auth.controller;
+package com.learcha.learchaapp.auth.web;
 
-import com.learcha.learchaapp.auth.controller.AuthDto.EmailDuplicationResult;
-import com.learcha.learchaapp.auth.controller.AuthDto.SignUpRequest;
-import com.learcha.learchaapp.auth.controller.AuthDto.SignUpResponse;
+import com.learcha.learchaapp.auth.web.AuthDto.EmailDuplicationResult;
+import com.learcha.learchaapp.auth.web.AuthDto.SignUpRequest;
+import com.learcha.learchaapp.auth.web.AuthDto.SignUpResponse;
 import com.learcha.learchaapp.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

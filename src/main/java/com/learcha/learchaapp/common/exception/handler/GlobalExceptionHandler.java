@@ -1,6 +1,7 @@
 package com.learcha.learchaapp.common.exception.handler;
 
 import com.learcha.learchaapp.common.error.ErrorResponse;
+import com.learcha.learchaapp.common.exception.EntityNotFoundException;
 import com.learcha.learchaapp.common.exception.InvalidParamException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(InvalidParamException.class)
     public ErrorResponse handleInvalidParamException(InvalidParamException ex) {
+        return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ErrorResponse handleEntityNotFoundException(EntityNotFoundException ex) {
         return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 

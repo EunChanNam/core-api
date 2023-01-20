@@ -1,14 +1,18 @@
 package com.learcha.learchaapp.auth.service;
 
+import com.learcha.learchaapp.auth.domain.Member;
 import com.learcha.learchaapp.auth.repository.MemberRepository;
 import com.learcha.learchaapp.common.exception.EntityNotFoundException;
+import com.learcha.learchaapp.common.util.jwt.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
+@Slf4j
 @Service
 public class CustomUserDetailService implements UserDetailsService {
 
@@ -16,8 +20,13 @@ public class CustomUserDetailService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        memberRepository.findByEmail(email)
+        log.info("email: {}", email);
+        Member member = memberRepository.findByEmail(email)
             .orElseThrow(EntityNotFoundException::new);
-        return null;
+        return new UserDetailsImpl(member);
+    }
+
+    public void registerRefreshToken(Member member, String refreshToken) {
+
     }
 }

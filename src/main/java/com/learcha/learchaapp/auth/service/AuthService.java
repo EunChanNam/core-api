@@ -1,7 +1,7 @@
 package com.learcha.learchaapp.auth.service;
 
-import com.learcha.learchaapp.auth.controller.AuthDto.SignUpRequest;
-import com.learcha.learchaapp.auth.controller.AuthDto.SignUpResponse;
+import com.learcha.learchaapp.auth.web.AuthDto.SignUpRequest;
+import com.learcha.learchaapp.auth.web.AuthDto.SignUpResponse;
 import com.learcha.learchaapp.auth.domain.Member;
 import com.learcha.learchaapp.auth.repository.MemberRepository;
 import com.learcha.learchaapp.common.exception.InvalidParamException;

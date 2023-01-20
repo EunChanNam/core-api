@@ -79,8 +79,11 @@ public class Member extends TimeStamp {
     }
 
     @Getter
-    private enum MemberRole {
-        USER
+    @RequiredArgsConstructor
+    public enum MemberRole {
+        ROLE_USER("USER"),
+        ROLE_ADMIN("ADMIN");
+        private final String description;
     }
 
     @Builder
@@ -104,7 +107,7 @@ public class Member extends TimeStamp {
         this.lastName = lastName;
         this.status = Status.NEED_AUTHENTICATED;
         this.authType = authType.equals("EMAIL") ? AuthType.EMAIL : AuthType.GOOGLE;
-        this.authority = MemberRole.USER;
+        this.authority = MemberRole.ROLE_USER;
     }
 
     public void changeAuthority(MemberRole authority) {

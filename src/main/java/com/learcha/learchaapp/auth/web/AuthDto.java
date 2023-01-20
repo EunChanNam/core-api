@@ -1,4 +1,4 @@
-package com.learcha.learchaapp.auth.controller;
+package com.learcha.learchaapp.auth.web;
 
 import com.learcha.learchaapp.auth.domain.Member;
 import lombok.Builder;
@@ -25,6 +25,13 @@ public class AuthDto {
                 .authType(authType)
                 .build();
         }
+    }
+
+    @ToString
+    @Getter
+    public static class LoginDto {
+        private String email;
+        private String password;
     }
 
 
