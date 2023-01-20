@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 
-public class MemberDto {
+public class AuthDto {
 
     @ToString
     @Getter
@@ -30,15 +30,27 @@ public class MemberDto {
 
     @Getter
     public static class SignUpResponse {
-        private final String authType;
         private final String email;
         private final String memberToken;
+        private final String authType;
 
         @Builder
         public SignUpResponse(String authType, String email, String memberToken) {
             this.authType = authType;
             this.email = email;
             this.memberToken = memberToken;
+        }
+    }
+
+    @Getter
+    public static class EmailDuplicationResult {
+        private final String email;
+        private final String isDuplicated;
+
+        @Builder
+        public EmailDuplicationResult(String email, boolean isDuplicated) {
+            this.email = email;
+            this.isDuplicated = isDuplicated ? "TRUE" : "FALSE";
         }
     }
 }

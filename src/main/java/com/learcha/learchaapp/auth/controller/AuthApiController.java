@@ -1,14 +1,17 @@
 package com.learcha.learchaapp.auth.controller;
 
-import com.learcha.learchaapp.auth.controller.MemberDto.SignUpRequest;
-import com.learcha.learchaapp.auth.controller.MemberDto.SignUpResponse;
+import com.learcha.learchaapp.auth.controller.AuthDto.EmailDuplicationResult;
+import com.learcha.learchaapp.auth.controller.AuthDto.SignUpRequest;
+import com.learcha.learchaapp.auth.controller.AuthDto.SignUpResponse;
 import com.learcha.learchaapp.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 @RestController
 public class AuthApiController {
+
     private final AuthService authService;
 
     @PostMapping("")
@@ -24,4 +28,16 @@ public class AuthApiController {
         return ResponseEntity.ok(authService.signUpMember(memberSignUpRequest));
     }
 
+    @GetMapping("")
+    public ResponseEntity<EmailDuplicationResult> checkDuplicatedEmail(@RequestParam String email) {
+        log.info("request email: {}", email);
+        boolean isDuplicated = authService.isAvailableEmail(email);
+
+        EmailDuplicationResult response = EmailDuplicationResult.builder()
+            .email(email)
+            .isDuplicated(isDuplicated)
+            .build();
+
+        return ResponseEntity.ok(response);
+    }
 }

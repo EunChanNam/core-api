@@ -9,3 +9,6 @@ Content-Type: application/json
   "password": "1234",
   "authType": "EMAIL"
 }
+
+###
+GET http://localhost:8080/api/auth?email=안녕
