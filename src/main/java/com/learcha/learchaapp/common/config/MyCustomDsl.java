@@ -3,8 +3,8 @@ package com.learcha.learchaapp.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learcha.learchaapp.auth.service.CustomUserDetailService;
-import com.learcha.learchaapp.common.util.jwt.JwtAuthenticationFilter;
-import com.learcha.learchaapp.common.util.jwt.JwtLoginFilter;
+import com.learcha.learchaapp.common.util.jwt.filter.JwtAuthenticationFilter;
+import com.learcha.learchaapp.common.util.jwt.filter.JwtLoginFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;

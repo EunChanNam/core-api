@@ -1,15 +1,15 @@
-package com.learcha.learchaapp.common.util.jwt;
+package com.learcha.learchaapp.common.util.jwt.model;
 
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
 @Getter
-public class JWTTokenInfo {
+public class JwtTokenBox {
     private final String accessToken;
     private final String refreshToken;
     private final String expireTime;
 
-    private JWTTokenInfo(String accessToken, String refreshToken, int expireTime) {
+    private JwtTokenBox(String accessToken, String refreshToken, int expireTime) {
         if (StringUtils.isBlank(accessToken)) throw new IllegalArgumentException("accessToken is blank");
         if (StringUtils.isBlank(refreshToken)) throw new IllegalArgumentException("refreshToken is blank");
         this.accessToken = accessToken;
@@ -17,7 +17,7 @@ public class JWTTokenInfo {
         this.expireTime = expireTime + "s";
     }
 
-    public static JWTTokenInfo of(String accessToken, String refreshToken, int expireTime) {
-        return new JWTTokenInfo(accessToken, refreshToken, expireTime);
+    public static JwtTokenBox of(String accessToken, String refreshToken, int expireTime) {
+        return new JwtTokenBox(accessToken, refreshToken, expireTime);
     }
 }

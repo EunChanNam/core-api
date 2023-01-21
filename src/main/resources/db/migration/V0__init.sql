@@ -15,3 +15,4 @@ CREATE TABLE member (
 );
 
 ALTER TABLE member ADD CONSTRAINT `uq_member_token` UNIQUE(member_token);
+ALTER TABLE member ADD CONSTRAINT `uq_email_auth_type` UNIQUE(member_token, auth_type);

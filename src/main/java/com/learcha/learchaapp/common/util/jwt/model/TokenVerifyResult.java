@@ -1,4 +1,4 @@
-package com.learcha.learchaapp.common.util.jwt;
+package com.learcha.learchaapp.common.util.jwt.model;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -15,6 +15,10 @@ public class TokenVerifyResult {
         this.result = result;
         this.email = username;
         this.message = message;
+    }
+
+    public boolean isVerified() {
+        return this.result;
     }
 
 }

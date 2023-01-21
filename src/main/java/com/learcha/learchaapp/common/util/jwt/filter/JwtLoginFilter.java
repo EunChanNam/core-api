@@ -1,16 +1,19 @@
-package com.learcha.learchaapp.common.util.jwt;
+package com.learcha.learchaapp.common.util.jwt.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learcha.learchaapp.auth.service.CustomUserDetailService;
 import com.learcha.learchaapp.auth.web.AuthDto.LoginDto;
+import com.learcha.learchaapp.common.util.jwt.JwtUtil;
+import com.learcha.learchaapp.common.util.jwt.model.JwtTokenBox;
+import com.learcha.learchaapp.common.util.jwt.model.UserDetailsImpl;
 import java.io.IOException;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseCookie.ResponseCookieBuilder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -58,23 +61,31 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
         HttpServletResponse response,
         FilterChain chain,
         Authentication authResult
-    ) throws IOException {
+    ) {
         UserDetailsImpl principal = (UserDetailsImpl) authResult.getPrincipal();
-        JWTTokenInfo tokenInfo = JwtProvider.generateTokenInfo(principal);
+        JwtTokenBox tokenBox = JwtUtil.generateTokenInfo(principal);
 
-        userDetailService.registerRefreshToken(principal.getMember(), tokenInfo.getRefreshToken());
+        String refreshToken = tokenBox.getRefreshToken();
+        userDetailService.registerRefreshToken(principal.getMember(), refreshToken);
 
-        response.setHeader("Authorization", "Bearer " + tokenInfo.getAccessToken());
-        response.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-        response.getWriter().write(objectMapper.writeValueAsString(tokenInfo));
+        response.setHeader("Authorization", "Bearer " + tokenBox.getAccessToken());
+        response.setHeader("Set-Cookie", createCookieOfRefreshToken(refreshToken).toString());
     }
 
     @Override
-    protected void unsuccessfulAuthentication(HttpServletRequest request,
-        HttpServletResponse response, AuthenticationException failed)
-        throws IOException, ServletException {
-        failed.getMessage();
-
+    protected void unsuccessfulAuthentication(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        AuthenticationException failed
+    ) throws IOException, ServletException {
         super.unsuccessfulAuthentication(request, response, failed);
     }
-}
+
+
+    private ResponseCookie createCookieOfRefreshToken(String refreshToken) {
+        ResponseCookieBuilder refreshTokenCookie = ResponseCookie.from("refresh_cookie", refreshToken);
+        refreshTokenCookie.httpOnly(true);
+        refreshTokenCookie.sameSite("None");
+        return refreshTokenCookie.build();
+    }
+ }

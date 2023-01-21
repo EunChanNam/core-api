@@ -1,1 +1,0 @@
-ALTER TABLE member ADD CONSTRAINT `uq_email_auth_type` UNIQUE(member_token, auth_type);

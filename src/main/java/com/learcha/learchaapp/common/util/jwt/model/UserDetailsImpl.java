@@ -1,4 +1,4 @@
-package com.learcha.learchaapp.common.util.jwt;
+package com.learcha.learchaapp.common.util.jwt.model;
 
 import com.learcha.learchaapp.auth.domain.Member;
 import java.util.ArrayList;
