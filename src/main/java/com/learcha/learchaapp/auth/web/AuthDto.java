@@ -1,6 +1,5 @@
 package com.learcha.learchaapp.auth.web;
 
-import com.learcha.learchaapp.auth.domain.Member;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
@@ -14,17 +13,6 @@ public class AuthDto {
         private String lastName;
         private String email;
         private String password;
-        private String authType;
-
-        public Member toEntity(String encodedPW) {
-            return Member.builder()
-                .email(email)
-                .password(encodedPW)
-                .firstName(firstName)
-                .lastName(lastName)
-                .authType(authType)
-                .build();
-        }
     }
 
     @ToString
@@ -58,6 +46,31 @@ public class AuthDto {
         public EmailDuplicationResult(String email, boolean isDuplicated) {
             this.email = email;
             this.isDuplicated = isDuplicated ? "TRUE" : "FALSE";
+        }
+    }
+
+    @Getter
+    public static class LoginSuccessResponse {
+        private final String email;
+        private final String authType;
+        private final String accessToken;
+
+        @Builder
+        public LoginSuccessResponse(String email, String authType, String accessToken) {
+            this.email = email;
+            this.authType = authType;
+            this.accessToken = accessToken;
+        }
+    }
+
+    @Getter
+    public static class AuthCodeResult {
+        private final String email;
+        private final String result;
+
+        public AuthCodeResult(String email, boolean result) {
+            this.email = email;
+            this.result = result ? "SUCCESS" : "FAIL";
         }
     }
 }

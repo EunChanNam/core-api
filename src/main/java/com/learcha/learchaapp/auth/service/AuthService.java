@@ -1,13 +1,20 @@
 package com.learcha.learchaapp.auth.service;
 
+import com.learcha.learchaapp.auth.domain.Member;
+import com.learcha.learchaapp.auth.domain.Member.AuthType;
+import com.learcha.learchaapp.auth.repository.MemberRepository;
 import com.learcha.learchaapp.auth.web.AuthDto.SignUpRequest;
 import com.learcha.learchaapp.auth.web.AuthDto.SignUpResponse;
-import com.learcha.learchaapp.auth.domain.Member;
-import com.learcha.learchaapp.auth.repository.MemberRepository;
 import com.learcha.learchaapp.common.exception.InvalidParamException;
+import java.util.Random;
+import javax.mail.Message.RecipientType;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,32 +22,115 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Service
 public class AuthService {
+
+    private final JavaMailSender javaMailSender;
     private final PasswordEncoder passwordEncoder;
     private final MemberRepository memberRepository;
+
+    @Value("spring.mail.username")
+    private String email;
 
     @Transactional
     public SignUpResponse signUpMember(SignUpRequest signUpRequest) {
         String encodedPassword = passwordEncoder.encode(signUpRequest.getPassword());
         String email = signUpRequest.getEmail();
 
-        if(memberRepository.existsMemberByEmail(email))
-            throw new InvalidParamException("Already Exist Email");
+        Member initMember = memberRepository.findByEmail(email)
+            .orElseThrow(() -> new InvalidParamException("해당 Email로 인증된 사용자가 없습니다."));
 
-        Member member = signUpRequest.toEntity(encodedPassword);
-        memberRepository.save(member);
+        Member authenticatedMember = initMember.updateEmailAuthenticatedUser(signUpRequest, encodedPassword);
+
+        memberRepository.save(authenticatedMember);
 
         return SignUpResponse.builder()
             .email(email)
-            .memberToken(member.getMemberToken())
-            .authType(member.getAuthType().getDescription())
+            .memberToken(authenticatedMember.getMemberToken())
+            .authType(authenticatedMember.getAuthType().getDescription())
             .build();
     }
 
-    private void emailAuthentication(String email) {
+    public void emailAuthentication(String email) throws Exception {
+        MimeMessage message = createMessage(Member.createInitEmailMember(email, AuthType.EMAIL), email);
+        javaMailSender.send(message);
+    }
 
+    public boolean getAuthResult(String authCode, String email) {
+        Member member = memberRepository.findByEmailAndAuthenticationCode(email, authCode)
+            .orElseThrow(InvalidParamException::new);
+
+        String savedAuthCode = member.getAuthenticationCode();
+
+        if(savedAuthCode.equals(authCode))
+            member.emailAuthenticationSuccess();
+
+        memberRepository.save(member);
+        return savedAuthCode.equals(authCode);
     }
 
     public boolean isAvailableEmail(String email) {
-        return memberRepository.existsMemberByEmail(email);
+        boolean res = memberRepository.existsMemberByEmail(email);
+        if(! res) {
+            Member member = Member.createInitEmailMember(email, AuthType.EMAIL);
+            memberRepository.save(member);
+        }
+
+        return res;
+    }
+
+
+    private String createAuthCode() {
+        StringBuffer key = new StringBuffer();
+        Random rnd = new Random();
+
+        for (int i = 0; i < 8; i++) { // 인증코드 8자리
+            int index = rnd.nextInt(3); // 0~2 까지 랜덤
+
+            switch (index) {
+                case 0:
+                    key.append((char) ((int) (rnd.nextInt(26)) + 97));
+                    //  a~z  (ex. 1+97=98 => (char)98 = 'b')
+                    break;
+                case 1:
+                    key.append((char) ((int) (rnd.nextInt(26)) + 65));
+                    //  A~Z
+                    break;
+                case 2:
+                    key.append((rnd.nextInt(10)));
+                    // 0~9
+                    break;
+            }
+        }
+        return key.toString();
+    }
+
+    private MimeMessage createMessage(Member member, String to) throws Exception {
+        String authCode = createAuthCode();
+        member.setAuthenticationCode(authCode);
+
+        MimeMessage  message = javaMailSender.createMimeMessage();
+
+        message.addRecipients(RecipientType.TO, to);//보내는 대상
+        message.setSubject("이메일 인증 테스트");//제목
+
+        String msgg="";
+        msgg+= "<div style='margin:20px;'>";
+        msgg+= "<h1> 안녕하세요 learncha 입니다. </h1>";
+        msgg+= "<br>";
+        msgg+= "<p>아래 코드를 복사해 입력해주세요<p>";
+        msgg+= "<br>";
+        msgg+= "<p>감사합니다.<p>";
+        msgg+= "<br>";
+        msgg+= "<div align='center' style='border:1px solid black; font-family:verdana';>";
+        msgg+= "<h3 style='color:blue;'>회원가입 인증 코드입니다.</h3>";
+        msgg+= "<div style='font-size:130%'>";
+        msgg+= "CODE : <strong>";
+        msgg+= authCode+"</strong><div><br/> ";
+        msgg+= "</div>";
+        message.setText(msgg, "utf-8", "html");
+        message.setFrom(new InternetAddress(email,"learncha"));
+
+        memberRepository.save(member);
+
+        return message;
     }
 }

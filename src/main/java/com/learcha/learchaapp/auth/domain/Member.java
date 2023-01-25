@@ -1,5 +1,6 @@
 package com.learcha.learchaapp.auth.domain;
 
+import com.learcha.learchaapp.auth.web.AuthDto.SignUpRequest;
 import com.learcha.learchaapp.common.abstractentity.TimeStamp;
 import com.learcha.learchaapp.common.exception.InvalidParamException;
 import com.learcha.learchaapp.common.util.TokeGenerator;
@@ -59,13 +60,23 @@ public class Member extends TimeStamp {
     @Column(nullable = false)
     private MemberRole authority;
 
+    @Column(nullable = true)
+    private String authenticationCode;
+
+    public Member updateEmailAuthenticatedUser(SignUpRequest signUpRequest, String encodedPw) {
+        this.password = encodedPw;
+        this.firstName = signUpRequest.getFirstName();
+        this.lastName = signUpRequest.getLastName();
+        this.authority = MemberRole.ROLE_USER;
+        return this;
+    }
+
 
     @Getter
     @RequiredArgsConstructor
     public enum Status {
         NEED_AUTHENTICATED("인증 필요"),
-        AUTHENTICATED("인증_완료"),
-        EXPIRED("이메일 인증 만료");
+        AUTHENTICATED("인증_완료");
         private final String description;
 
     }
@@ -87,36 +98,41 @@ public class Member extends TimeStamp {
     }
 
     @Builder
-    public Member (
+    public Member(
         String email,
-        String password,
-        String firstName,
-        String lastName,
-        String authType
+        AuthType authType
     ) {
         if(StringUtils.isEmpty(email)) throw new InvalidParamException("Email is required!!");
-        if(StringUtils.isEmpty(password)) throw new InvalidParamException("Password is required!!");
-        if(StringUtils.isEmpty(firstName)) throw new InvalidParamException("first name is required!!");
-        if(StringUtils.isEmpty(lastName)) throw new InvalidParamException("last name is required!!");
         if(authType == null) throw new InvalidParamException("auth type never be null");
 
         this.memberToken = TokeGenerator.randomCharacterWithPrefix(MEMBER_PREFIX);
         this.email = email;
-        this.password = password;
-        this.firstName = firstName;
-        this.lastName = lastName;
         this.status = Status.NEED_AUTHENTICATED;
-        this.authType = authType.equals("EMAIL") ? AuthType.EMAIL : AuthType.GOOGLE;
-        this.authority = MemberRole.ROLE_USER;
+        this.authType = authType;
     }
 
-    public void changeAuthority(MemberRole authority) {
-        if(authority == null) throw new RuntimeException("authority is never be null");
-        this.authority = authority;
+    public static Member createInitEmailMember(String email, AuthType authType) {
+        return new Member(email, authType);
+    }
+
+    public void setRoleAdmin() {
+        this.authority = MemberRole.ROLE_ADMIN;
+    }
+
+    public void setRoleUser() {
+        this.authority = MemberRole.ROLE_USER;
     }
 
     public void registerReasonOfWithdrawal(String reason) {
         if(reason == null) throw new InvalidParamException("reason of withdrawal never be null");
         this.reasonWithdrawal = reason;
+    }
+
+    public void setAuthenticationCode(String authenticationCode) {
+        this.authenticationCode = authenticationCode;
+    }
+
+    public void emailAuthenticationSuccess() {
+        this.status = Status.AUTHENTICATED;
     }
 }

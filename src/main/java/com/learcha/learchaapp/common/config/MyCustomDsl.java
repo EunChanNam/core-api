@@ -24,10 +24,10 @@ public class MyCustomDsl extends AbstractHttpConfigurer<MyCustomDsl, HttpSecurit
 
         http
             .addFilterAt(
-                new JwtLoginFilter(authenticationManager, objectMapper, userDetailService),
+                new JwtLoginFilter(authenticationManager, userDetailService, objectMapper),
                 UsernamePasswordAuthenticationFilter.class
             )
-            .addFilterAt(new JwtAuthenticationFilter(authenticationManager, userDetailService),
+            .addFilterAt(new JwtAuthenticationFilter(authenticationManager, userDetailService, objectMapper),
                 UsernamePasswordAuthenticationFilter.class
             );
     }

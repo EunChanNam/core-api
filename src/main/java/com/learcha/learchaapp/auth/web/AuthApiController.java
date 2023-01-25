@@ -1,9 +1,11 @@
 package com.learcha.learchaapp.auth.web;
 
+import com.learcha.learchaapp.auth.web.AuthDto.AuthCodeResult;
 import com.learcha.learchaapp.auth.web.AuthDto.EmailDuplicationResult;
 import com.learcha.learchaapp.auth.web.AuthDto.SignUpRequest;
 import com.learcha.learchaapp.auth.web.AuthDto.SignUpResponse;
 import com.learcha.learchaapp.auth.service.AuthService;
+import javax.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 @RestController
 public class AuthApiController {
 
@@ -39,5 +41,23 @@ public class AuthApiController {
             .build();
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/send-code")
+    public ResponseEntity<Void> sendAuthCode(
+        @RequestParam @NotBlank(message = "email never be empty") String email
+    ) throws Exception {
+        log.info("email: {}", email);
+        authService.emailAuthentication(email);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/confirm-code")
+    public ResponseEntity<AuthCodeResult> getEmailAuthResult(
+        @RequestParam @NotBlank(message = "auth code never be empty") String authCode,
+        @RequestParam @NotBlank(message = "email never be empty") String email
+    ) {
+        boolean res = authService.getAuthResult(authCode, email);
+        return ResponseEntity.ok(new AuthCodeResult(email, res));
     }
 }

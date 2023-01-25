@@ -35,7 +35,11 @@ public class SecurityConfig {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring().antMatchers("/api/auth");
+        return (web) -> web.ignoring().antMatchers(
+            "/api/v1/auth",
+            "/api/v1/auth/send-code",
+            "/api/v1/auth/confirm-code"
+        );
     }
 
     @Bean
@@ -47,7 +51,8 @@ public class SecurityConfig {
             .authorizeRequests()
             .antMatchers("/api/**").authenticated()
             .and()
-            .apply(customDsl(objectMapper, userDetailsService));
+            .apply(customDsl(objectMapper, userDetailsService))
+            ;
 
         return http.build();
     }

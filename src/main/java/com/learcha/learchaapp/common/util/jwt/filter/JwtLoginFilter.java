@@ -3,6 +3,7 @@ package com.learcha.learchaapp.common.util.jwt.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learcha.learchaapp.auth.service.CustomUserDetailService;
 import com.learcha.learchaapp.auth.web.AuthDto.LoginDto;
+import com.learcha.learchaapp.auth.web.AuthDto.LoginSuccessResponse;
 import com.learcha.learchaapp.common.util.jwt.JwtUtil;
 import com.learcha.learchaapp.common.util.jwt.model.JwtTokenBox;
 import com.learcha.learchaapp.common.util.jwt.model.UserDetailsImpl;
@@ -28,12 +29,12 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
 
     public JwtLoginFilter(
         AuthenticationManager authenticationManager,
-        ObjectMapper objectMapper,
-        CustomUserDetailService customUserDetailService
+        CustomUserDetailService customUserDetailService,
+        ObjectMapper objectMapper
     ) {
         super(authenticationManager);
-        this.objectMapper = objectMapper;
         this.userDetailService = customUserDetailService;
+        this.objectMapper = objectMapper;
         this.setFilterProcessesUrl("/api/auth/login");
     }
 
@@ -61,15 +62,20 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
         HttpServletResponse response,
         FilterChain chain,
         Authentication authResult
-    ) {
+    ) throws IOException {
         UserDetailsImpl principal = (UserDetailsImpl) authResult.getPrincipal();
         JwtTokenBox tokenBox = JwtUtil.generateTokenInfo(principal);
 
         String refreshToken = tokenBox.getRefreshToken();
         userDetailService.registerRefreshToken(principal.getMember(), refreshToken);
 
-        response.setHeader("Authorization", "Bearer " + tokenBox.getAccessToken());
+        LoginSuccessResponse res = LoginSuccessResponse.builder()
+            .email(principal.getUsername())
+            .authType(principal.getMember().getAuthType().getDescription())
+            .accessToken(tokenBox.getAccessToken()).build();
+
         response.setHeader("Set-Cookie", createCookieOfRefreshToken(refreshToken).toString());
+        response.getWriter().write(objectMapper.writeValueAsString(res));
     }
 
     @Override
@@ -83,8 +89,9 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
 
 
     private ResponseCookie createCookieOfRefreshToken(String refreshToken) {
-        ResponseCookieBuilder refreshTokenCookie = ResponseCookie.from("refresh_cookie", refreshToken);
+        ResponseCookieBuilder refreshTokenCookie = ResponseCookie.from("refresh_token", refreshToken);
         refreshTokenCookie.httpOnly(true);
+        refreshTokenCookie.path("/");
         refreshTokenCookie.sameSite("None");
         return refreshTokenCookie.build();
     }

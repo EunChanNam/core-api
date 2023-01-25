@@ -1,0 +1,1 @@
+ALTER TABLE member ADD CONSTRAINT `uq_email_auth-code` UNIQUE (email, authentication_code)
