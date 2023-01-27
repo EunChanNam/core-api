@@ -5,6 +5,6 @@ EXPOSE 8080
 ENTRYPOINT [                     \
   "java",                        \
   "-jar",                        \
-  "-Dspring.profiles.active=prod",  \
+  "-Dspring.profiles.active=default",  \
   "learncha-app.jar"  \
 ]
