@@ -3,7 +3,7 @@ version: 0.2
 env:
   variables:
     AWS_DEFAULT_REGION: "ap-northeast-2"
-    ECR_URL: "866453353217.dkr.ecr.ap-northeast-2.amazonaws.com/learncha-be-api"
+    ECR_URL: "866453353217.dkr.ecr.ap-northeast-2.amazonaws.com"
     ECR_DOCKER_IMAGE: "learncha-be-api"
     ECR_DOCKER_TAG: "1.0.0"
 
