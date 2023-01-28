@@ -8,6 +8,9 @@ env:
     ECR_DOCKER_TAG: "1.0.0"
 
 phases:
+  install:
+    runtime-versions:
+      java: corretto11
   pre_build:
     commands:
       - echo Logging to Amazon ECR
