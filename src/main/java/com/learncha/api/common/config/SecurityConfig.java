@@ -36,6 +36,7 @@ public class SecurityConfig {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.ignoring().antMatchers(
+            "/api/health-check",
             "/api/v1/auth",
             "/api/v1/auth/send-code",
             "/api/v1/auth/confirm-code"
