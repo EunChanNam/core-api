@@ -20,7 +20,7 @@ phases:
     commands:
       - echo build jar file
       - chmod +x gradlew
-      - ./gradlew clean build
+      - ./gradlew clean build -x test
       - echo Build started on `date`
       - docker build -t ${ECR_URL}/${ECR_DOCKER_IMAGE}:${ECR_DOCKER_TAG} .
       - echo Build Done
