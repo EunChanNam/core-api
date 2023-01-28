@@ -50,3 +50,56 @@ logging:
 jwt:
   secret: aaaaaabbbbbbbbcccccccddddddddeeeeeeefffffgggg
 
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: 'aws-parameterstore:'
+
+  lifecycle:
+    timeout-per-shutdown-phase: 2000
+
+  datasource:
+    url: ${jdbc.url}
+    username: ${jdbc.username}
+    password: ${jdbc.password}
+    hikari:
+      maximum-pool-size: 20
+      read-only: false
+      connection-timeout: 1000
+      connectionTestQuery: SELECT 1
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: devlearncha@gmail.com
+    password: ${mail.password}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+aws:
+  paramstore:
+    enabled: true
+    prefix: /config
+    profile-separator: _
+    name: api
+
+logging:
+  level:
+    com.zaxxer.hikari.pool.HikariPool: debug
+
+jwt:
+  secret: ${jwt.secret.key}
+
+
+
+

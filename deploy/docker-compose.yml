@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  order-api:
+    image: ${IMAGE}:${TAG}
+    container_name: order-api
+    ports:
+      - "8080:8080"
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ap-northeast-2
+        awslogs-group: learncha-be-api-instance
