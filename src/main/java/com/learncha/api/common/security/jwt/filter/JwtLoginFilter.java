@@ -39,7 +39,7 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
         this.userDetailService = customUserDetailService;
         this.objectMapper = objectMapper;
         this.customFailureHandler = new CustomFailureHandler(objectMapper);
-        this.setFilterProcessesUrl("/api/auth/login");
+        this.setFilterProcessesUrl("/api/v1/auth/login");
     }
 
     @Override
