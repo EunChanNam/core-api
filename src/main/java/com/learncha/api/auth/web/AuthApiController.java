@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -59,5 +60,11 @@ public class AuthApiController {
     ) {
         boolean res = authService.getAuthResult(authCode, email);
         return ResponseEntity.ok(new AuthCodeResult(email, res));
+    }
+
+    @DeleteMapping("/email")
+    public ResponseEntity<Void> removeAuth(@RequestParam String email) {
+        authService.removeAuth(email);
+        return ResponseEntity.ok().build();
     }
 }

@@ -160,4 +160,11 @@ public class AuthService {
 
         return message;
     }
+
+    public void removeAuth(String email) {
+        Member member = memberRepository.findByEmail(email)
+            .orElseThrow(() -> new InvalidParamException("Already Removed Email"));
+
+        memberRepository.deleteById(member.getId());
+    }
 }
