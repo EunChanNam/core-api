@@ -4,9 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learncha.api.auth.service.CustomUserDetailService;
 import com.learncha.api.auth.web.AuthDto.LoginDto;
 import com.learncha.api.auth.web.AuthDto.LoginSuccessResponse;
+import com.learncha.api.common.security.exception.CustomFailureHandler;
+import com.learncha.api.common.security.jwt.JwtUtil;
 import com.learncha.api.common.security.jwt.model.JwtTokenBox;
 import com.learncha.api.common.security.jwt.model.UserDetailsImpl;
-import com.learncha.api.common.security.jwt.JwtUtil;
 import java.io.IOException;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -19,6 +20,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Slf4j
@@ -26,6 +28,7 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private final ObjectMapper objectMapper;
     private final CustomUserDetailService userDetailService;
+    private final AuthenticationFailureHandler customFailureHandler;
 
     public JwtLoginFilter(
         AuthenticationManager authenticationManager,
@@ -35,6 +38,7 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
         super(authenticationManager);
         this.userDetailService = customUserDetailService;
         this.objectMapper = objectMapper;
+        this.customFailureHandler = new CustomFailureHandler(objectMapper);
         this.setFilterProcessesUrl("/api/auth/login");
     }
 
@@ -84,8 +88,7 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
         HttpServletResponse response,
         AuthenticationException failed
     ) throws IOException, ServletException {
-
-        super.unsuccessfulAuthentication(request, response, failed);
+        this.customFailureHandler.onAuthenticationFailure(request,response, failed);
     }
 
 

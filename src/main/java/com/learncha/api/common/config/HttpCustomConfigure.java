@@ -18,7 +18,7 @@ public class HttpCustomConfigure extends AbstractHttpConfigurer<HttpCustomConfig
     private final CustomUserDetailService userDetailService;
 
     @Override
-    public void configure(HttpSecurity http) {
+    public void configure(HttpSecurity http) throws Exception {
         AuthenticationManager authenticationManager = http.getSharedObject(AuthenticationManager.class);
 
         http
@@ -28,7 +28,8 @@ public class HttpCustomConfigure extends AbstractHttpConfigurer<HttpCustomConfig
             )
             .addFilterAt(new JwtAuthenticationFilter(authenticationManager, userDetailService, objectMapper),
                 UsernamePasswordAuthenticationFilter.class
-            );
+            )
+            ;
     }
 
     public static HttpCustomConfigure customDsl(ObjectMapper objectMapper, CustomUserDetailService userDetailService) {

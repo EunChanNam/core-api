@@ -73,4 +73,13 @@ public class AuthDto {
             this.result = result ? "SUCCESS" : "FAIL";
         }
     }
+
+    @Getter
+    public static class InvalidPasswordResponse {
+        private final String message;
+
+        public InvalidPasswordResponse() {
+            this.message = "Invalid Password";
+        }
+    }
 }
