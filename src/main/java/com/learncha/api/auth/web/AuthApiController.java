@@ -46,7 +46,7 @@ public class AuthApiController {
     @PostMapping("/send-code")
     public ResponseEntity<Void> sendAuthCode(
         @RequestParam @NotBlank(message = "email never be empty") String email
-    ) throws Exception {
+    ) {
         log.info("email: {}", email);
         authService.emailAuthentication(email);
         return ResponseEntity.ok().build();
