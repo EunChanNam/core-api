@@ -1,6 +1,6 @@
 package com.learncha.api.common.config;
 
-import static com.learncha.api.common.config.MyCustomDsl.customDsl;
+import static com.learncha.api.common.config.HttpCustomConfigure.customDsl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learncha.api.auth.service.CustomUserDetailService;

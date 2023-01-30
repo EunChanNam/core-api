@@ -5,6 +5,7 @@ spring:
   config:
     activate:
       on-profile: default
+    import: 'aws-parameterstore:'
 
   lifecycle:
     timeout-per-shutdown-phase: 20s
@@ -46,6 +47,13 @@ spring:
 logging:
   level:
     com.zaxxer.hikari.pool.HikariPool: debug
+
+aws:
+  paramstore:
+    enabled: true
+    prefix: /config
+    profile-separator: _
+    name: api
 
 jwt:
   secret: aaaaaabbbbbbbbcccccccddddddddeeeeeeefffffgggg

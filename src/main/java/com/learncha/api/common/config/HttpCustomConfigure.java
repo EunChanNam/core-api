@@ -12,14 +12,13 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @RequiredArgsConstructor
-public class MyCustomDsl extends AbstractHttpConfigurer<MyCustomDsl, HttpSecurity> {
+public class HttpCustomConfigure extends AbstractHttpConfigurer<HttpCustomConfigure, HttpSecurity> {
 
     private final ObjectMapper objectMapper;
     private final CustomUserDetailService userDetailService;
 
     @Override
     public void configure(HttpSecurity http) {
-
         AuthenticationManager authenticationManager = http.getSharedObject(AuthenticationManager.class);
 
         http
@@ -32,7 +31,7 @@ public class MyCustomDsl extends AbstractHttpConfigurer<MyCustomDsl, HttpSecurit
             );
     }
 
-    public static MyCustomDsl customDsl(ObjectMapper objectMapper, CustomUserDetailService userDetailService) {
-        return new MyCustomDsl(objectMapper, userDetailService);
+    public static HttpCustomConfigure customDsl(ObjectMapper objectMapper, CustomUserDetailService userDetailService) {
+        return new HttpCustomConfigure(objectMapper, userDetailService);
     }
 }
