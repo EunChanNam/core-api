@@ -1,10 +1,10 @@
-package com.learncha.api.common.util.jwt.filter;
+package com.learncha.api.common.security.jwt.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learncha.api.auth.service.CustomUserDetailService;
 import com.learncha.api.auth.web.AuthDto.LoginSuccessResponse;
-import com.learncha.api.common.util.jwt.JwtUtil;
-import com.learncha.api.common.util.jwt.model.TokenVerifyResult;
+import com.learncha.api.common.security.jwt.model.TokenVerifyResult;
+import com.learncha.api.common.security.jwt.JwtUtil;
 import java.io.IOException;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;

@@ -1,12 +1,12 @@
-package com.learncha.api.common.util.jwt.filter;
+package com.learncha.api.common.security.jwt.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learncha.api.auth.service.CustomUserDetailService;
 import com.learncha.api.auth.web.AuthDto.LoginDto;
 import com.learncha.api.auth.web.AuthDto.LoginSuccessResponse;
-import com.learncha.api.common.util.jwt.JwtUtil;
-import com.learncha.api.common.util.jwt.model.JwtTokenBox;
-import com.learncha.api.common.util.jwt.model.UserDetailsImpl;
+import com.learncha.api.common.security.jwt.model.JwtTokenBox;
+import com.learncha.api.common.security.jwt.model.UserDetailsImpl;
+import com.learncha.api.common.security.jwt.JwtUtil;
 import java.io.IOException;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -84,6 +84,7 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
         HttpServletResponse response,
         AuthenticationException failed
     ) throws IOException, ServletException {
+
         super.unsuccessfulAuthentication(request, response, failed);
     }
 

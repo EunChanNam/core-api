@@ -1,8 +1,8 @@
-package com.learncha.api.common.util.jwt;
+package com.learncha.api.common.security.jwt;
 
-import com.learncha.api.common.util.jwt.model.JwtTokenBox;
-import com.learncha.api.common.util.jwt.model.TokenVerifyResult;
-import com.learncha.api.common.util.jwt.model.UserDetailsImpl;
+import com.learncha.api.common.security.jwt.model.JwtTokenBox;
+import com.learncha.api.common.security.jwt.model.TokenVerifyResult;
+import com.learncha.api.common.security.jwt.model.UserDetailsImpl;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;

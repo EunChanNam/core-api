@@ -3,8 +3,8 @@ package com.learncha.api.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learncha.api.auth.service.CustomUserDetailService;
-import com.learncha.api.common.util.jwt.filter.JwtAuthenticationFilter;
-import com.learncha.api.common.util.jwt.filter.JwtLoginFilter;
+import com.learncha.api.common.security.jwt.filter.JwtAuthenticationFilter;
+import com.learncha.api.common.security.jwt.filter.JwtLoginFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;

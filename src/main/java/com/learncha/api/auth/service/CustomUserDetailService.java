@@ -5,7 +5,7 @@ import com.learncha.api.auth.domain.MemberRefreshToken;
 import com.learncha.api.auth.repository.MemberRepository;
 import com.learncha.api.auth.repository.RefreshTokenRepository;
 import com.learncha.api.common.exception.EntityNotFoundException;
-import com.learncha.api.common.util.jwt.model.UserDetailsImpl;
+import com.learncha.api.common.security.jwt.model.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;

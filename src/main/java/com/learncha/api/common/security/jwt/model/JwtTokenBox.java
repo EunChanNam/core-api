@@ -1,4 +1,4 @@
-package com.learncha.api.common.util.jwt.model;
+package com.learncha.api.common.security.jwt.model;
 
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;

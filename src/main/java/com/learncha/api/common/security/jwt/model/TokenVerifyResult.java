@@ -1,4 +1,4 @@
-package com.learncha.api.common.util.jwt.model;
+package com.learncha.api.common.security.jwt.model;
 
 import lombok.Builder;
 import lombok.Getter;
