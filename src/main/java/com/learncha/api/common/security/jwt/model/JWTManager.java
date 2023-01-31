@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 public class JWTManager {
 
     private static final Integer ACCESS_TOKEN_EXPIRATION_TIME = 60 * 15;
-    private static final Integer REFRESH_TOKEN_EXPIRATION_TIME = 3600 * 60 * 24 * 14; // 2주
+    private static final Integer REFRESH_TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 14;
     private final Key secretKey;
 
     public JWTManager(@Value("${jwt.secret.key}") String secretValue) {
@@ -67,7 +67,7 @@ public class JWTManager {
     private String generateAccessToken(UserDetailsImpl userDetails) {
         return Jwts.builder()
             .setSubject(userDetails.getUsername())
-            .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION_TIME))
+            .setExpiration(new Date(System.currentTimeMillis() + (ACCESS_TOKEN_EXPIRATION_TIME * 1000)))
             .setIssuedAt(new Date(System.currentTimeMillis()))
             .signWith(secretKey, SignatureAlgorithm.HS256)
             .compact();
@@ -76,7 +76,7 @@ public class JWTManager {
     private String generateRefreshToken(UserDetailsImpl userDetails) {
         return Jwts.builder()
             .setSubject(userDetails.getUsername())
-            .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION_TIME))
+            .setExpiration(new Date(System.currentTimeMillis() + (REFRESH_TOKEN_EXPIRATION_TIME * 1000)))
             .setIssuedAt(new Date(System.currentTimeMillis()))
             .signWith(secretKey, SignatureAlgorithm.HS256)
             .compact();
