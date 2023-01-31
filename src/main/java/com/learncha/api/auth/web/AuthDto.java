@@ -22,7 +22,6 @@ public class AuthDto {
         private String password;
     }
 
-
     @Getter
     public static class SignUpResponse {
         private final String email;

@@ -4,10 +4,14 @@ import com.learncha.api.auth.domain.Member;
 import com.learncha.api.auth.domain.Member.AuthType;
 import com.learncha.api.auth.domain.Member.Status;
 import com.learncha.api.auth.repository.MemberRepository;
+import com.learncha.api.auth.web.AuthDto.LoginDto;
 import com.learncha.api.auth.web.AuthDto.SignUpRequest;
 import com.learncha.api.auth.web.AuthDto.SignUpResponse;
 import com.learncha.api.common.exception.AlreadyAuthenticatedEmail;
 import com.learncha.api.common.exception.InvalidParamException;
+import com.learncha.api.common.security.jwt.model.JWTManager;
+import com.learncha.api.common.security.jwt.model.JWTManager.JwtTokenBox;
+import com.learncha.api.common.security.jwt.model.UserDetailsImpl;
 import java.util.Random;
 import javax.mail.Message.RecipientType;
 import javax.mail.internet.InternetAddress;
@@ -17,6 +21,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.authentication.AccountExpiredException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.CredentialsExpiredException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +37,9 @@ public class AuthService {
 
     private final JavaMailSender javaMailSender;
     private final PasswordEncoder passwordEncoder;
+    private final CustomUserDetailService customUserDetailService;
     private final MemberRepository memberRepository;
+    private final JWTManager jwtManager;
 
     @Value("spring.mail.username")
     private String email;
@@ -117,6 +129,46 @@ public class AuthService {
         return res;
     }
 
+    public JwtTokenBox login(LoginDto loginDto) {
+        String loginEmail = loginDto.getEmail();
+
+        UserDetailsImpl userDetails = customUserDetailService.loadUserByUsername(loginEmail);
+        checkValidation(userDetails);
+        checkPasswordMatch(loginDto.getPassword(), userDetails.getPassword());
+
+        return jwtManager.generateTokenBox(userDetails);
+    }
+
+    private void checkPasswordMatch(String requestedPw, String storedUserDetailsPw) {
+        if (!this.passwordEncoder.matches(requestedPw, storedUserDetailsPw)) {
+            log.debug("Failed to authenticate since password does not match stored value");
+            throw new BadCredentialsException("Requested Password does not match");
+        }
+    }
+
+    private void checkValidation(UserDetails userDetails) {
+        if (!userDetails.isAccountNonLocked()) {
+            throw new LockedException("User account is locked");
+        }
+        if (!userDetails.isEnabled()) {
+            throw new DisabledException("User is disabled");
+        }
+        if (!userDetails.isAccountNonExpired()) {
+            throw new AccountExpiredException("User account has expired");
+        }
+
+        if (!userDetails.isCredentialsNonExpired()) {
+            throw new CredentialsExpiredException("Uer credential expired");
+        }
+    }
+
+    public void removeAuth(String email) {
+        Member member = memberRepository.findByEmail(email)
+            .orElseThrow(() -> new InvalidParamException("Already Removed Email"));
+
+        memberRepository.deleteById(member.getId());
+    }
+
     private String createAuthCode() {
         StringBuffer key = new StringBuffer(); Random rnd = new Random();
 
@@ -161,10 +213,4 @@ public class AuthService {
         return message;
     }
 
-    public void removeAuth(String email) {
-        Member member = memberRepository.findByEmail(email)
-            .orElseThrow(() -> new InvalidParamException("Already Removed Email"));
-
-        memberRepository.deleteById(member.getId());
-    }
 }

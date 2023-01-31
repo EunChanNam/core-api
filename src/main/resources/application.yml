@@ -3,7 +3,7 @@ server:
 
 jwt:
   secret:
-    key: eqwenkqwjnjewqjehqwlhjjdjaslajdqwjuqwewqndkndqwbn
+    key: aaaaaaaaaaaaaabbbbbbbbbbbbccccccccccccccddddddddeeeeeeffff
 
 spring:
   config:

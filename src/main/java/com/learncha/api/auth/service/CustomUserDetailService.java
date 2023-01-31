@@ -8,7 +8,6 @@ import com.learncha.api.common.exception.EntityNotFoundException;
 import com.learncha.api.common.security.jwt.model.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -22,7 +21,7 @@ public class CustomUserDetailService implements UserDetailsService {
     private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    public UserDetailsImpl loadUserByUsername(String email) throws UsernameNotFoundException {
         Member member = memberRepository.findByEmail(email)
             .orElseThrow(EntityNotFoundException::new);
         return new UserDetailsImpl(member);

@@ -1,6 +1,5 @@
-package com.learncha.api.common.security.jwt;
+package com.learncha.api.common.security.jwt.model;
 
-import com.learncha.api.common.security.jwt.model.UserDetailsImpl;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -21,15 +20,15 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public class JwtManager {
+public class JWTManager {
 
     private static final Integer ACCESS_TOKEN_EXPIRATION_TIME = 60 * 15;
     private static final Integer REFRESH_TOKEN_EXPIRATION_TIME = 3600 * 60 * 24 * 14; // 2주
 
 //    @Value("${jwt.secret.key}")
-//    private String SECRET_VALUE;
-    private String SECRET_VALUE = "aaaaaaaaaaaaaabbbbbbbbbbbbccccccccccccccddddddddeeeeeeffff";
-    private Key secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET_VALUE));;
+//    private String secretValue;
+    private String secretValue = "aaaaaaaaaaaaaabbbbbbbbbbbbccccccccccccccddddddddeeeeeeffff";
+    private Key secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretValue));;
 
     public TokenVerifyResult verifyToken(String token) {
         try {
@@ -53,13 +52,13 @@ public class JwtManager {
         }
     }
 
-    public JwtTokenBox generateTokenInfo(UserDetailsImpl user) {
+    public JwtTokenBox generateTokenBox(UserDetailsImpl user) {
         String token = generateAccessToken(user);
         String refreshToken = generateRefreshToken(user);
-        return JwtTokenBox.of(token, refreshToken, ACCESS_TOKEN_EXPIRATION_TIME);
+        return JwtTokenBox.of(token, refreshToken, user.getMember().getAuthType().getDescription(), ACCESS_TOKEN_EXPIRATION_TIME);
     }
 
-    public String generateAccessToken(UserDetailsImpl userDetails) {
+    private String generateAccessToken(UserDetailsImpl userDetails) {
         return Jwts.builder()
             .setSubject(userDetails.getUsername())
             .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION_TIME))
@@ -90,18 +89,26 @@ public class JwtManager {
     public static class JwtTokenBox {
         private final String accessToken;
         private final String refreshToken;
-        private final String expireTime;
+        private final String expiredAt;
+        private final String authType;
 
-        private JwtTokenBox(String accessToken, String refreshToken, int expireTime) {
-            if (StringUtils.isBlank(accessToken)) throw new IllegalArgumentException("accessToken is blank");
-            if (StringUtils.isBlank(refreshToken)) throw new IllegalArgumentException("refreshToken is blank");
+        private JwtTokenBox(
+            String accessToken,
+            String refreshToken,
+            String authType,
+            int expiredAt
+        ) {
+            if(StringUtils.isBlank(accessToken)) throw new IllegalArgumentException("AccessToken is blank");
+            if(StringUtils.isBlank(refreshToken)) throw new IllegalArgumentException("RefreshToken is blank");
+            if(StringUtils.isBlank(authType)) throw new IllegalArgumentException("Auth Type is blank");
             this.accessToken = accessToken;
             this.refreshToken = refreshToken;
-            this.expireTime = expireTime + "s";
+            this.authType = authType;
+            this.expiredAt = expiredAt + "s";
         }
 
-        public static JwtTokenBox of(String accessToken, String refreshToken, int expireTime) {
-            return new JwtTokenBox(accessToken, refreshToken, expireTime);
+        public static JwtTokenBox of(String accessToken, String refreshToken, String authType, int expireTime) {
+            return new JwtTokenBox(accessToken, refreshToken, authType, expireTime);
         }
     }
 
@@ -144,7 +151,6 @@ public class JwtManager {
                 .message(errorMessage)
                 .build();
         }
-
 
         public boolean isVerified() {
             return result;

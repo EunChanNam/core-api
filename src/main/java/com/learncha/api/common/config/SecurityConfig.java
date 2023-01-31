@@ -1,15 +1,9 @@
 package com.learncha.api.common.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.learncha.api.auth.service.CustomUserDetailService;
-import com.learncha.api.common.security.jwt.JwtManager;
 import com.learncha.api.common.security.jwt.filter.JwtAuthenticationFilter;
-import com.learncha.api.common.security.jwt.filter.JwtLoginFilter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
@@ -25,9 +19,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final ObjectMapper objectMapper;
-    private final CustomUserDetailService userDetailsService;
-    private final JwtManager jwtManager;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -54,18 +46,17 @@ public class SecurityConfig {
             .authorizeRequests()
             .antMatchers("/api/**").authenticated()
             .and()
-            .addFilterAt(jwtLoginFilter(), UsernamePasswordAuthenticationFilter.class)
-            .addFilterAt(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+            .addFilterAt(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             ;
 
         return http.build();
     }
 
-    @Bean
-    public AuthenticationManager authenticationManager(
-        AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
+//    @Bean
+//    public AuthenticationManager authenticationManager(
+//        AuthenticationConfiguration authenticationConfiguration) throws Exception {
+//        return authenticationConfiguration.getAuthenticationManager();
+//    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -77,34 +68,15 @@ public class SecurityConfig {
         return (web) -> web.ignoring().antMatchers(
             "/api/health-check",
             "/api/v1/auth",
+            "/api/v1/auth/login",
             "/api/v1/auth/send-code",
             "/api/v1/auth/confirm-code"
         );
     }
 
-    @Bean
-    public AuthenticationConfiguration authenticationConfiguration() {
-        return new AuthenticationConfiguration();
-    }
-
-    @Bean
-    public JwtLoginFilter jwtLoginFilter() throws Exception {
-        return new JwtLoginFilter(
-            authenticationManager(authenticationConfiguration()),
-            userDetailsService,
-            objectMapper,
-            jwtManager
-        );
-    }
-
-    @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter() throws Exception {
-        return new JwtAuthenticationFilter(
-            authenticationManager(authenticationConfiguration()),
-            userDetailsService,
-            objectMapper,
-            jwtManager
-        );
-    }
+//    @Bean
+//    public AuthenticationConfiguration authenticationConfiguration() {
+//        return new AuthenticationConfiguration();
+//    }
 }
 
