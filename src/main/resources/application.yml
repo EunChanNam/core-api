@@ -1,6 +1,10 @@
 server:
   port: 8080
 
+jwt:
+  secret:
+    key: eqwenkqwjnjewqjehqwlhjjdjaslajdqwjuqwewqndkndqwbn
+
 spring:
   config:
     activate:
@@ -54,9 +58,6 @@ aws:
     prefix: /config
     profile-separator: _
     name: api
-
-jwt:
-  secret: aaaaaabbbbbbbbcccccccddddddddeeeeeeefffffgggg
 
 ---
 spring:

@@ -5,8 +5,8 @@ import com.learncha.api.auth.service.CustomUserDetailService;
 import com.learncha.api.auth.web.AuthDto.LoginDto;
 import com.learncha.api.auth.web.AuthDto.LoginSuccessResponse;
 import com.learncha.api.common.security.exception.CustomFailureHandler;
-import com.learncha.api.common.security.jwt.JwtUtil;
-import com.learncha.api.common.security.jwt.model.JwtTokenBox;
+import com.learncha.api.common.security.jwt.JwtManager;
+import com.learncha.api.common.security.jwt.JwtManager.JwtTokenBox;
 import com.learncha.api.common.security.jwt.model.UserDetailsImpl;
 import java.io.IOException;
 import javax.servlet.FilterChain;
@@ -29,16 +29,19 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
     private final ObjectMapper objectMapper;
     private final CustomUserDetailService userDetailService;
     private final AuthenticationFailureHandler customFailureHandler;
+    private final JwtManager jwtManager;
 
     public JwtLoginFilter(
         AuthenticationManager authenticationManager,
         CustomUserDetailService customUserDetailService,
-        ObjectMapper objectMapper
+        ObjectMapper objectMapper,
+        JwtManager jwtManager
     ) {
         super(authenticationManager);
         this.userDetailService = customUserDetailService;
         this.objectMapper = objectMapper;
         this.customFailureHandler = new CustomFailureHandler(objectMapper);
+        this.jwtManager = jwtManager;
         this.setFilterProcessesUrl("/api/v1/auth/login");
     }
 
@@ -68,7 +71,7 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
         Authentication authResult
     ) throws IOException {
         UserDetailsImpl principal = (UserDetailsImpl) authResult.getPrincipal();
-        JwtTokenBox tokenBox = JwtUtil.generateTokenInfo(principal);
+        JwtTokenBox tokenBox = jwtManager.generateTokenInfo(principal);
 
         String refreshToken = tokenBox.getRefreshToken();
         userDetailService.registerRefreshToken(principal.getMember(), refreshToken);

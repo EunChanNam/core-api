@@ -1,9 +1,10 @@
 package com.learncha.api.common.config;
 
-import static com.learncha.api.common.config.HttpCustomConfigure.customDsl;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learncha.api.auth.service.CustomUserDetailService;
+import com.learncha.api.common.security.jwt.JwtManager;
+import com.learncha.api.common.security.jwt.filter.JwtAuthenticationFilter;
+import com.learncha.api.common.security.jwt.filter.JwtLoginFilter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -16,6 +17,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
@@ -25,26 +27,7 @@ public class SecurityConfig {
 
     private final ObjectMapper objectMapper;
     private final CustomUserDetailService userDetailsService;
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring().antMatchers(
-            "/api/health-check",
-            "/api/v1/auth",
-            "/api/v1/auth/send-code",
-            "/api/v1/auth/confirm-code"
-        );
-    }
+    private final JwtManager jwtManager;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -65,16 +48,63 @@ public class SecurityConfig {
                     c.configurationSource(source);
                 }
             )
+            .formLogin().disable()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
-            .formLogin().disable()
             .authorizeRequests()
             .antMatchers("/api/**").authenticated()
             .and()
-            .apply(customDsl(objectMapper, userDetailsService))
+            .addFilterAt(jwtLoginFilter(), UsernamePasswordAuthenticationFilter.class)
+            .addFilterAt(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
             ;
 
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+        AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring().antMatchers(
+            "/api/health-check",
+            "/api/v1/auth",
+            "/api/v1/auth/send-code",
+            "/api/v1/auth/confirm-code"
+        );
+    }
+
+    @Bean
+    public AuthenticationConfiguration authenticationConfiguration() {
+        return new AuthenticationConfiguration();
+    }
+
+    @Bean
+    public JwtLoginFilter jwtLoginFilter() throws Exception {
+        return new JwtLoginFilter(
+            authenticationManager(authenticationConfiguration()),
+            userDetailsService,
+            objectMapper,
+            jwtManager
+        );
+    }
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() throws Exception {
+        return new JwtAuthenticationFilter(
+            authenticationManager(authenticationConfiguration()),
+            userDetailsService,
+            objectMapper,
+            jwtManager
+        );
     }
 }
 

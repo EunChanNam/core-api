@@ -3,8 +3,8 @@ package com.learncha.api.common.security.jwt.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learncha.api.auth.service.CustomUserDetailService;
 import com.learncha.api.auth.web.AuthDto.LoginSuccessResponse;
-import com.learncha.api.common.security.jwt.model.TokenVerifyResult;
-import com.learncha.api.common.security.jwt.JwtUtil;
+import com.learncha.api.common.security.jwt.JwtManager;
+import com.learncha.api.common.security.jwt.JwtManager.TokenVerifyResult;
 import java.io.IOException;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -21,18 +21,22 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
-    private static final String COOKIE_NAME = "refresh_token";
+
+    private static final String REFRESH_COOKIE_NAME = "refresh_token";
     private final UserDetailsService customUserDetailService;
     private final ObjectMapper objectMapper;
+    private final JwtManager jwtManager;
 
     public JwtAuthenticationFilter(
         AuthenticationManager authenticationManager,
         CustomUserDetailService customUserDetailService,
-        ObjectMapper objectMapper
+        ObjectMapper objectMapper,
+        JwtManager jwtManager
     ) {
         super(authenticationManager);
         this.customUserDetailService = customUserDetailService;
         this.objectMapper = objectMapper;
+        this.jwtManager = jwtManager;
     }
 
     @Override
@@ -49,18 +53,18 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
         }
 
         String token = bearer.substring("Bearer ".length());
-        TokenVerifyResult verifyResult = JwtUtil.verifyToken(token);
+        TokenVerifyResult verifyResult = jwtManager.verifyToken(token);
 
         if(verifyResult.isVerified()) {
             setAuthentication(verifyResult);
             chain.doFilter(request, response);
-        } else if(verifyResult.getMessage().equals("Token Expired")) {
+        } else if(verifyResult.getMessage().equals(TokenVerifyResult.TOKEN_EXPIRED_MESSAGE)) {
             String refreshToken = getRefreshToken(request);
 
             if(StringUtils.isBlank(refreshToken))
                 chain.doFilter(request, response);
 
-            TokenVerifyResult refreshTokenVerifyResult = JwtUtil.verifyToken(refreshToken);
+            TokenVerifyResult refreshTokenVerifyResult = jwtManager.verifyToken(refreshToken);
 
             if(refreshTokenVerifyResult.isVerified()) {
                 UserDetails member = customUserDetailService.loadUserByUsername(refreshTokenVerifyResult.getEmail());
@@ -87,7 +91,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
     protected void onSuccessfulAuthentication(HttpServletRequest request,
         HttpServletResponse response, Authentication authResult) throws IOException {
         String email = (String) authResult.getPrincipal();
-        String accessToken = JwtUtil.generateAccessTokenFromUserEmail(email);
+        String accessToken = jwtManager.generateAccessTokenFromUserEmail(email);
 
         LoginSuccessResponse res = LoginSuccessResponse.builder()
             .email(email)
@@ -116,7 +120,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
         }
 
         for(Cookie cookie : cookies)
-            if(cookie.getName().equals(COOKIE_NAME))
+            if(cookie.getName().equals(REFRESH_COOKIE_NAME))
                 return cookie.getValue();
 
         return "";
