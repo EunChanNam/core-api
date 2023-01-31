@@ -16,6 +16,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -24,11 +25,16 @@ public class JWTManager {
 
     private static final Integer ACCESS_TOKEN_EXPIRATION_TIME = 60 * 15;
     private static final Integer REFRESH_TOKEN_EXPIRATION_TIME = 3600 * 60 * 24 * 14; // 2주
+    private final Key secretKey;
 
-//    @Value("${jwt.secret.key}")
-//    private String secretValue;
-    private String secretValue = "aaaaaaaaaaaaaabbbbbbbbbbbbccccccccccccccddddddddeeeeeeffff";
-    private Key secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretValue));;
+    public JWTManager(@Value("${jwt.secret.key}") String secretValue) {
+        log.info("secret value: {}", secretValue);
+        if(StringUtils.isBlank(secretValue)) {
+            log.debug("Jwt Secret Value Of JWT Manager is NULL");
+            throw new RuntimeException("Jwt Secret Value is NULL");
+        }
+        this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretValue));
+    }
 
     public TokenVerifyResult verifyToken(String token) {
         try {
@@ -61,15 +67,6 @@ public class JWTManager {
     private String generateAccessToken(UserDetailsImpl userDetails) {
         return Jwts.builder()
             .setSubject(userDetails.getUsername())
-            .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION_TIME))
-            .setIssuedAt(new Date(System.currentTimeMillis()))
-            .signWith(secretKey, SignatureAlgorithm.HS256)
-            .compact();
-    }
-
-    public String generateAccessTokenFromUserEmail(String email) {
-        return Jwts.builder()
-            .setSubject(email)
             .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION_TIME))
             .setIssuedAt(new Date(System.currentTimeMillis()))
             .signWith(secretKey, SignatureAlgorithm.HS256)

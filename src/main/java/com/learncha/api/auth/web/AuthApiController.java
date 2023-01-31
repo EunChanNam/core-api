@@ -79,7 +79,6 @@ public class AuthApiController {
     @PostMapping("/login")
     public ResponseEntity<LoginSuccessResponse> login(@RequestBody @Valid AuthDto.LoginDto loginDto) {
         JwtTokenBox jwtTokenBox = authService.login(loginDto);
-
         LoginSuccessResponse res = LoginSuccessResponse.builder()
             .email(loginDto.getEmail())
             .accessToken(jwtTokenBox.getAccessToken())
@@ -88,7 +87,7 @@ public class AuthApiController {
 
         String refreshCookie = createCookieOfRefreshToken(jwtTokenBox.getRefreshToken());
         MultiValueMap<String, String> headers = new HttpHeaders();
-        headers.add("Set-Cookie", refreshCookie.toString());
+        headers.add("Set-Cookie", refreshCookie);
 
         return new ResponseEntity<>(res, headers, HttpStatus.OK);
     }
