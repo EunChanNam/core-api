@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(AlreadyAuthenticatedEmail.class)
-    public ErrorResponse handleAlreadyAuthenticatedException(EntityNotFoundException ex) {
+    public ErrorResponse handleAlreadyAuthenticatedException(AlreadyAuthenticatedEmail ex) {
         return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
