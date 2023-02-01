@@ -77,7 +77,7 @@ public class AuthApiController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginSuccessResponse> login(@RequestBody @Valid AuthDto.LoginDto loginDto) {
+    public ResponseEntity<LoginSuccessResponse> login(@RequestBody @Valid AuthDto.LoginRequestDto loginDto) {
         JwtTokenBox jwtTokenBox = authService.login(loginDto);
         LoginSuccessResponse res = LoginSuccessResponse.builder()
             .email(loginDto.getEmail())
@@ -90,6 +90,12 @@ public class AuthApiController {
         headers.add("Set-Cookie", refreshCookie);
 
         return new ResponseEntity<>(res, headers, HttpStatus.OK);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteMember(@RequestBody @Valid AuthDto.DeleteMemberRequestDto deleteMemberDto) {
+        authService.deleteMember(deleteMemberDto);
+        return ResponseEntity.ok().build();
     }
 
     private String createCookieOfRefreshToken(String refreshToken) {

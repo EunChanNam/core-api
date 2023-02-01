@@ -17,9 +17,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.annotations.Where;
 
 @Getter
 @NoArgsConstructor
+@Where(clause = "status != 'DELETED'")
 @Entity
 @Table(name = "member")
 public class Member extends TimeStamp {
@@ -71,14 +73,13 @@ public class Member extends TimeStamp {
         return this;
     }
 
-
     @Getter
     @RequiredArgsConstructor
     public enum Status {
         NEED_AUTHENTICATED("인증 필요"),
-        AUTHENTICATED("인증_완료");
+        AUTHENTICATED("인증_완료"),
+        DELETED("DELETED");
         private final String description;
-
     }
 
     @Getter
@@ -132,6 +133,14 @@ public class Member extends TimeStamp {
         this.authenticationCode = authenticationCode;
     }
 
+    public void onDelete() {
+        this.status = Status.DELETED;
+    }
+
+    public void setDeleteReason(String reason) {
+        this.reasonWithdrawal = reason;
+    }
+    
     public void emailAuthenticationSuccess() {
         this.status = Status.AUTHENTICATED;
     }

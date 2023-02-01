@@ -4,7 +4,8 @@ import com.learncha.api.auth.domain.Member;
 import com.learncha.api.auth.domain.Member.AuthType;
 import com.learncha.api.auth.domain.Member.Status;
 import com.learncha.api.auth.repository.MemberRepository;
-import com.learncha.api.auth.web.AuthDto.LoginDto;
+import com.learncha.api.auth.web.AuthDto.DeleteMemberRequestDto;
+import com.learncha.api.auth.web.AuthDto.LoginRequestDto;
 import com.learncha.api.auth.web.AuthDto.SignUpRequest;
 import com.learncha.api.auth.web.AuthDto.SignUpResponse;
 import com.learncha.api.common.exception.AlreadyAuthenticatedEmail;
@@ -42,7 +43,7 @@ public class AuthService {
     private final JWTManager jwtManager;
 
     @Value("spring.mail.username")
-    private String email;
+    private String mailServerUsername;
 
     @Transactional
     public SignUpResponse signUpMember(SignUpRequest signUpRequest) {
@@ -67,6 +68,7 @@ public class AuthService {
             .ifPresentOrElse(
                 member -> {
                     String memberStatus = member.getStatus().getDescription();
+
                     if(memberStatus.equals(Status.AUTHENTICATED.getDescription())) {
                         throw new AlreadyAuthenticatedEmail();
                     } else if(memberStatus.equals(Status.NEED_AUTHENTICATED.getDescription())) {
@@ -129,7 +131,7 @@ public class AuthService {
         return res;
     }
 
-    public JwtTokenBox login(LoginDto loginDto) {
+    public JwtTokenBox login(LoginRequestDto loginDto) {
         String loginEmail = loginDto.getEmail();
 
         UserDetailsImpl userDetails = customUserDetailService.loadUserByUsername(loginEmail);
@@ -137,6 +139,28 @@ public class AuthService {
         checkPasswordMatch(loginDto.getPassword(), userDetails.getPassword());
 
         return jwtManager.generateTokenBox(userDetails);
+    }
+
+    @Transactional
+    public void deleteMember(DeleteMemberRequestDto deleteMemberDto) {
+        String email = deleteMemberDto.getEmail();
+
+        Member member = memberRepository.findByEmail(email)
+            .orElseThrow(() -> new InvalidParamException("Already Deleted Member"));
+
+        StringBuffer deletedReasonBuffer = new StringBuffer();
+        deletedReasonBuffer.append("selected reason: ");
+
+        for(String selectedReason : deleteMemberDto.getSelectedReason()) {
+            deletedReasonBuffer.append(selectedReason).append(" ");
+        }
+
+        deletedReasonBuffer.append("\n");
+        deletedReasonBuffer.append("etcMessage: ");
+        deletedReasonBuffer.append(deleteMemberDto.getEtcMsg());
+
+        member.onDelete();
+        member.setDeleteReason(deletedReasonBuffer.toString());
     }
 
     private void checkPasswordMatch(String requestedPw, String storedUserDetailsPw) {
@@ -208,9 +232,10 @@ public class AuthService {
         msgg += "<div style='font-size:130%'>"; msgg += "CODE : <strong>";
         msgg += authCode + "</strong><div><br/> "; msgg += "</div>";
         message.setText(msgg, "utf-8", "html");
-        message.setFrom(new InternetAddress(email, "learncha"));
+        message.setFrom(new InternetAddress(mailServerUsername, "learncha"));
 
         return message;
     }
+
 
 }

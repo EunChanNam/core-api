@@ -1,7 +1,11 @@
 package com.learncha.api.auth.web;
 
+import java.util.List;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 public class AuthDto {
@@ -17,9 +21,19 @@ public class AuthDto {
 
     @ToString
     @Getter
-    public static class LoginDto {
+    public static class LoginRequestDto {
         private String email;
         private String password;
+    }
+
+    @NoArgsConstructor
+    @Getter
+    public static class DeleteMemberRequestDto {
+        private String email;
+        @Size(min=1, message = "최소 1개의 사유를 선택해주세요.")
+        private List<String> selectedReason;
+        @NotBlank(message = "탈퇴사유는 필수 값 입니다.")
+        private String etcMsg;
     }
 
     @Getter
@@ -76,7 +90,6 @@ public class AuthDto {
     @Getter
     public static class InvalidPasswordResponse {
         private final String message;
-
         public InvalidPasswordResponse() {
             this.message = "Invalid Password";
         }
