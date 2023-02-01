@@ -1,7 +1,6 @@
 package com.learncha.api.common.security.jwt.model;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -44,9 +43,6 @@ public class JWTManager {
                 .parseClaimsJws(token)
                 .getBody();
             return TokenVerifyResult.ofSuccess(data);
-        } catch(ExpiredJwtException ex) {
-            log.info(ex.getMessage());
-            return TokenVerifyResult.ofTokenExpired();
         } catch(
             SignatureException |
             IllegalArgumentException |

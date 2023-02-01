@@ -1,15 +1,20 @@
 package com.learncha.api.common.security.jwt.filter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.learncha.api.common.error.ErrorResponse;
 import com.learncha.api.common.security.jwt.model.JWTManager;
 import com.learncha.api.common.security.jwt.model.JWTManager.TokenVerifyResult;
+import io.jsonwebtoken.ExpiredJwtException;
 import java.io.IOException;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,12 +22,13 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final String REFRESH_COOKIE_NAME = "refresh_token";
     private final UserDetailsService customUserDetailService;
+    private final ObjectMapper objectMapper;
     private final JWTManager jwtManager;
 
     @Override
@@ -31,7 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         HttpServletResponse response,
         FilterChain chain
     ) throws IOException, ServletException {
-        String bearer = request.getHeader("Authorization");
+        String bearer = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (bearer == null || !bearer.startsWith("Bearer ")) {
             chain.doFilter(request, response);
@@ -39,36 +45,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = bearer.substring("Bearer ".length());
-        TokenVerifyResult verifyResult = jwtManager.verifyToken(token);
 
-        if(verifyResult.isVerified()) {
-            setAuthentication(verifyResult);
-            chain.doFilter(request, response);
-        } else if(verifyResult.getMessage().equals(TokenVerifyResult.TOKEN_EXPIRED_MESSAGE)) {
-            String refreshToken = getRefreshToken(request);
-
-            if(StringUtils.isBlank(refreshToken))
-                chain.doFilter(request, response);
-
-            TokenVerifyResult refreshTokenVerifyResult = jwtManager.verifyToken(refreshToken);
-
-            if(refreshTokenVerifyResult.isVerified()) {
-                UserDetails member = customUserDetailService.loadUserByUsername(refreshTokenVerifyResult.getEmail());
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    member.getUsername(),
-                    member.getPassword(),
-                    member.getAuthorities()
-                );
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+        try {
+            TokenVerifyResult verifyResult = jwtManager.verifyToken(token);
+            if(verifyResult.isVerified()) {
+                setAuthentication(verifyResult);
             }
-//            setAuthentication(refreshTokenVerifyResult);
             chain.doFilter(request, response);
-        } else {
-            logger.error(verifyResult.getMessage());
+        } catch(ExpiredJwtException e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+            ErrorResponse res = ErrorResponse.of(HttpStatus.UNAUTHORIZED, "Access Token Expired");
+            objectMapper.writeValue(response.getOutputStream(), res);
         }
-        chain.doFilter(request, response);
     }
-
 
     private void setAuthentication(TokenVerifyResult verifyResult) {
         UserDetails member = customUserDetailService.loadUserByUsername(verifyResult.getEmail());
@@ -79,19 +69,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-    }
-
-
-    private String getRefreshToken(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if(cookies.length == 0) {
-            return "";
-        }
-
-        for(Cookie cookie : cookies)
-            if(cookie.getName().equals(REFRESH_COOKIE_NAME))
-                return cookie.getValue();
-
-        return "";
     }
 }

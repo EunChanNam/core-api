@@ -18,7 +18,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @RequiredArgsConstructor
 @EnableWebSecurity
 public class SecurityConfig {
-
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
@@ -41,22 +40,17 @@ public class SecurityConfig {
                 }
             )
             .formLogin().disable()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
             .authorizeRequests()
-            .antMatchers("/api/**").authenticated()
+                .antMatchers("/api/**").authenticated()
             .and()
             .addFilterAt(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             ;
 
         return http.build();
     }
-
-//    @Bean
-//    public AuthenticationManager authenticationManager(
-//        AuthenticationConfiguration authenticationConfiguration) throws Exception {
-//        return authenticationConfiguration.getAuthenticationManager();
-//    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -73,10 +67,5 @@ public class SecurityConfig {
             "/api/v1/auth/confirm-code"
         );
     }
-
-//    @Bean
-//    public AuthenticationConfiguration authenticationConfiguration() {
-//        return new AuthenticationConfiguration();
-//    }
 }
 
