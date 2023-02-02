@@ -75,6 +75,22 @@ aws:
     name: api
 
 ---
+
+springdoc:
+  swagger-ui:
+    path: /api-docs
+    groups-order: DESC
+    operations-sorter: alpha
+    tags-sorter: alpha
+  api-docs:
+    path: /api-docs/json
+    groups:
+      enabled: true
+  default-consumes-media-type:
+    application/json;charset=UTF-8
+  default-produces-media-type:
+    application/json;charset=UTF-8
+
 spring:
   config:
     activate:
