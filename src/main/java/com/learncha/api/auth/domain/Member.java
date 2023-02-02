@@ -4,6 +4,7 @@ import com.learncha.api.auth.web.AuthDto.SignUpRequest;
 import com.learncha.api.common.abstractentity.TimeStamp;
 import com.learncha.api.common.exception.InvalidParamException;
 import com.learncha.api.common.util.TokeGenerator;
+import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -17,11 +18,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.annotations.Where;
 
 @Getter
 @NoArgsConstructor
-@Where(clause = "status != 'DELETED'")
 @Entity
 @Table(name = "member")
 public class Member extends TimeStamp {
@@ -64,14 +63,6 @@ public class Member extends TimeStamp {
 
     @Column(nullable = true)
     private String authenticationCode;
-
-    public Member updateEmailAuthenticatedUser(SignUpRequest signUpRequest, String encodedPw) {
-        this.password = encodedPw;
-        this.firstName = signUpRequest.getFirstName();
-        this.lastName = signUpRequest.getLastName();
-        this.authority = MemberRole.ROLE_USER;
-        return this;
-    }
 
     @Getter
     @RequiredArgsConstructor
@@ -116,6 +107,18 @@ public class Member extends TimeStamp {
         return new Member(email, authType);
     }
 
+    public Member updateEmailAuthenticatedUser(SignUpRequest signUpRequest, String encodedPw) {
+        this.password = encodedPw;
+        this.firstName = signUpRequest.getFirstName();
+        this.lastName = signUpRequest.getLastName();
+        this.authority = MemberRole.ROLE_USER;
+        return this;
+    }
+
+    public boolean isNeedEmailAuthentication() {
+        return Objects.equals(this.status, Status.NEED_AUTHENTICATED);
+    }
+
     public void setRoleAdmin() {
         this.authority = MemberRole.ROLE_ADMIN;
     }
@@ -133,6 +136,14 @@ public class Member extends TimeStamp {
         this.authenticationCode = authenticationCode;
     }
 
+    public Member resetToInitMember() {
+        this.password = null;
+        this.reasonWithdrawal = null;
+        this.status = Status.NEED_AUTHENTICATED;
+        this.authType = AuthType.EMAIL;
+        return this;
+    }
+
     public void onDelete() {
         this.status = Status.DELETED;
     }
@@ -140,8 +151,12 @@ public class Member extends TimeStamp {
     public void setDeleteReason(String reason) {
         this.reasonWithdrawal = reason;
     }
-    
+
     public void emailAuthenticationSuccess() {
         this.status = Status.AUTHENTICATED;
     }
+
+    public boolean isAuthenticated() { return Objects.equals(this.status, Status.AUTHENTICATED);}
+
+    public boolean isDeleted() { return Objects.equals(this.status, Status.DELETED);}
 }

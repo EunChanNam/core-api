@@ -50,15 +50,19 @@ public class AuthService {
         String encodedPassword = passwordEncoder.encode(signUpRequest.getPassword());
         String email = signUpRequest.getEmail();
 
-        Member initMember = memberRepository.findByEmail(email)
+        Member storedMember = memberRepository.findByEmail(email)
             .orElseThrow(() -> new InvalidParamException("해당 Email로 인증된 사용자가 없습니다."));
 
-        Member authenticatedMember = initMember.updateEmailAuthenticatedUser(signUpRequest,
-            encodedPassword);
+
+        Member authenticatedMember = storedMember.updateEmailAuthenticatedUser(
+            signUpRequest,
+            encodedPassword
+        );
 
         memberRepository.save(authenticatedMember);
 
-        return SignUpResponse.builder().email(email)
+        return SignUpResponse.builder()
+            .email(email)
             .memberToken(authenticatedMember.getMemberToken())
             .authType(authenticatedMember.getAuthType().getDescription()).build();
     }
@@ -67,15 +71,19 @@ public class AuthService {
         memberRepository.findByEmail(email)
             .ifPresentOrElse(
                 member -> {
-                    String memberStatus = member.getStatus().getDescription();
+                    if(member.isDeleted()) {
+                        member = reSendAuthCodeToEmail(member, email);
+                        Member resetMember = member.resetToInitMember();
+                        memberRepository.save(resetMember);
+                        return;
+                    }
 
-                    if(memberStatus.equals(Status.AUTHENTICATED.getDescription())) {
+                    if(member.isAuthenticated()) {
                         throw new AlreadyAuthenticatedEmail();
-                    } else if(memberStatus.equals(Status.NEED_AUTHENTICATED.getDescription())) {
+                    } else if(member.isNeedEmailAuthentication()) {
                         Member reMember = reSendAuthCodeToEmail(member, email);
                         memberRepository.save(reMember);
                     }
-
                 },
                 () -> {
                     Member member = sendFirstAuthCodeToEmail(email);
@@ -85,7 +93,7 @@ public class AuthService {
 
     private Member sendFirstAuthCodeToEmail(String email) {
         Member initMember = Member.createInitEmailMember(email, AuthType.EMAIL);
-        MimeMessage message = null;
+        MimeMessage message;
 
         try {
             message = createMessage(initMember, email);
@@ -97,7 +105,7 @@ public class AuthService {
     }
 
     private Member reSendAuthCodeToEmail(Member member, String email) {
-        MimeMessage message = null;
+        MimeMessage message;
 
         try {
             message = createMessage(member, email);
@@ -145,7 +153,7 @@ public class AuthService {
     public void deleteMember(DeleteMemberRequestDto deleteMemberDto) {
         String email = deleteMemberDto.getEmail();
 
-        Member member = memberRepository.findByEmail(email)
+        Member member = memberRepository.findByEmailAndStatusIsNot(email, Status.DELETED)
             .orElseThrow(() -> new InvalidParamException("Already Deleted Member"));
 
         StringBuffer deletedReasonBuffer = new StringBuffer();
@@ -160,7 +168,7 @@ public class AuthService {
         deletedReasonBuffer.append(deleteMemberDto.getEtcMsg());
 
         member.onDelete();
-        member.setDeleteReason(deletedReasonBuffer.toString());
+        member.registerReasonOfWithdrawal(deletedReasonBuffer.toString());
     }
 
     private void checkPasswordMatch(String requestedPw, String storedUserDetailsPw) {
@@ -217,7 +225,8 @@ public class AuthService {
     }
 
     private MimeMessage createMessage(Member member, String to) throws Exception {
-        String authCode = createAuthCode(); member.setAuthenticationCode(authCode);
+        String authCode = createAuthCode();
+        member.setAuthenticationCode(authCode);
 
         MimeMessage message = javaMailSender.createMimeMessage();
 
@@ -236,6 +245,4 @@ public class AuthService {
 
         return message;
     }
-
-
 }
