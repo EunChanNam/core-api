@@ -1,5 +1,7 @@
 package com.learncha.api.auth.web;
 
+import com.learncha.api.auth.domain.Member.AuthType;
+import com.learncha.api.common.exception.InvalidParamException;
 import java.util.List;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -7,6 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
 
 public class AuthDto {
 
@@ -34,6 +37,38 @@ public class AuthDto {
         private List<String> selectedReason;
         @NotBlank(message = "탈퇴사유는 필수 값 입니다.")
         private String etcMsg;
+    }
+
+    @Getter
+    public static class VerifyRequestDto {
+        private final String authType;
+        private final String email;
+        private final String password;
+
+        public VerifyRequestDto(String authType, String email, String password) {
+            if( ! isAuthTypeEmail(authType) &&
+                ! isAuthTypeGoogle(authType)
+            )
+                throw new InvalidParamException("잘못된 인증방식이 전달되었습니다.");
+
+            if(isAuthTypeEmail(authType) && StringUtils.isBlank(password))
+                throw new InvalidParamException("Password는 필수 값 입니다.");
+
+            if(StringUtils.isBlank(email))
+                throw new InvalidParamException("Email은 필수 값입니다.");
+
+            this.authType = authType;
+            this.email = email;
+            this.password = password;
+        }
+
+        private boolean isAuthTypeEmail(String authType) {
+            return authType.equals(AuthType.EMAIL.getDescription());
+        }
+
+        private boolean isAuthTypeGoogle(String authType) {
+            return authType.equals(AuthType.GOOGLE.getDescription());
+        }
     }
 
     @Getter
@@ -88,10 +123,30 @@ public class AuthDto {
     }
 
     @Getter
-    public static class InvalidPasswordResponse {
-        private final String message;
-        public InvalidPasswordResponse() {
-            this.message = "Invalid Password";
+    public static class PasswordUpdateDto {
+        private final String email;
+        private final String password;
+        private final String newPassword;
+        private final String newPasswordConfirm;
+
+        public PasswordUpdateDto(String email, String password, String newPassword, String newPasswordConfirm) {
+            if(! StringUtils.equals(newPassword, newPasswordConfirm)) {
+                throw new InvalidParamException("변경하고자 하는 패스워드가 일치하지 않습니다.");
+            }
+
+            this.email = email;
+            this.password = password;
+            this.newPassword = newPassword;
+            this.newPasswordConfirm = newPasswordConfirm;
+        }
+    }
+
+    @Getter
+    public static class MemberVerifyResponse {
+        private final String result;
+
+        public MemberVerifyResponse(boolean result) {
+            this.result = result ? "TRUE" : "FALSE";
         }
     }
 }

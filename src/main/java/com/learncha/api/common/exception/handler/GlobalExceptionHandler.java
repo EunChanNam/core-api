@@ -6,6 +6,7 @@ import com.learncha.api.common.exception.EntityNotFoundException;
 import com.learncha.api.common.exception.InvalidParamException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -33,6 +34,13 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
         log.debug(ex.getMessage());
         return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getFieldError());
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(BadCredentialsException.class)
+    public ErrorResponse handleBadCredentialException(BadCredentialsException ex) {
+        log.debug(ex.getMessage());
+        return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)

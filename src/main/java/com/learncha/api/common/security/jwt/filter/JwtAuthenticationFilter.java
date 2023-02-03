@@ -2,6 +2,7 @@ package com.learncha.api.common.security.jwt.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learncha.api.common.error.ErrorResponse;
+import com.learncha.api.common.exception.EntityNotFoundException;
 import com.learncha.api.common.security.jwt.model.JWTManager;
 import com.learncha.api.common.security.jwt.model.JWTManager.TokenVerifyResult;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -57,8 +58,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             response.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
             ErrorResponse res = ErrorResponse.of(HttpStatus.UNAUTHORIZED, "Access Token Expired");
             objectMapper.writeValue(response.getOutputStream(), res);
+        } catch(EntityNotFoundException e) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+            ErrorResponse res = ErrorResponse.of(HttpStatus.BAD_REQUEST, "등록된 이메일이 아닙니다.");
+            objectMapper.writeValue(response.getOutputStream(), res);
         }
     }
+
+
 
     private void setAuthentication(TokenVerifyResult verifyResult) {
         UserDetails member = customUserDetailService.loadUserByUsername(verifyResult.getEmail());

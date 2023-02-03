@@ -69,6 +69,7 @@ public class Member extends TimeStamp {
     public enum Status {
         NEED_AUTHENTICATED("인증 필요"),
         AUTHENTICATED("인증_완료"),
+        ACTIVE("ACTIVE"),
         DELETED("DELETED");
         private final String description;
     }
@@ -107,11 +108,12 @@ public class Member extends TimeStamp {
         return new Member(email, authType);
     }
 
-    public Member updateEmailAuthenticatedUser(SignUpRequest signUpRequest, String encodedPw) {
+    public Member updateToEmailActiveUser(SignUpRequest signUpRequest, String encodedPw) {
         this.password = encodedPw;
         this.firstName = signUpRequest.getFirstName();
         this.lastName = signUpRequest.getLastName();
         this.authority = MemberRole.ROLE_USER;
+        this.status = Status.ACTIVE;
         return this;
     }
 
@@ -159,4 +161,16 @@ public class Member extends TimeStamp {
     public boolean isAuthenticated() { return Objects.equals(this.status, Status.AUTHENTICATED);}
 
     public boolean isDeleted() { return Objects.equals(this.status, Status.DELETED);}
+
+    public void updatePwToTemporaryPW(String tempPassword) {
+        this.password = tempPassword;
+    }
+
+    public void updateNewPassword(String newPassword) {
+        this.password = newPassword;
+    }
+
+    public boolean isActive() {
+        return Objects.equals(this.status, Status.ACTIVE);
+    }
 }

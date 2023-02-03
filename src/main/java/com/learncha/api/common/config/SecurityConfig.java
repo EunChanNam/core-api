@@ -4,6 +4,7 @@ import com.learncha.api.common.security.jwt.filter.JwtAuthenticationFilter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
@@ -44,6 +45,11 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
             .authorizeRequests()
+                .antMatchers(HttpMethod.POST, "/api/v1/auth").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/v1/auth").permitAll()
+                .antMatchers(HttpMethod.PUT,  "/api/v1/auth").authenticated()
+                .antMatchers(HttpMethod.DELETE,  "/api/v1/auth").authenticated()
+                .antMatchers(HttpMethod.GET,  "/api/v1/auth/temporary-password").permitAll()
                 .antMatchers("/api/**").authenticated()
             .and()
             .addFilterAt(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
@@ -61,7 +67,6 @@ public class SecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.ignoring().antMatchers(
             "/api/health-check",
-            "/api/v1/auth",
             "/api/v1/auth/login",
             "/api/v1/auth/send-code",
             "/api/v1/auth/confirm-code"

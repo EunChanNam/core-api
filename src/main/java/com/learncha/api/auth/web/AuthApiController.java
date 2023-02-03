@@ -4,8 +4,11 @@ import com.learncha.api.auth.service.AuthService;
 import com.learncha.api.auth.web.AuthDto.AuthCodeResult;
 import com.learncha.api.auth.web.AuthDto.EmailDuplicationResult;
 import com.learncha.api.auth.web.AuthDto.LoginSuccessResponse;
+import com.learncha.api.auth.web.AuthDto.MemberVerifyResponse;
+import com.learncha.api.auth.web.AuthDto.PasswordUpdateDto;
 import com.learncha.api.auth.web.AuthDto.SignUpRequest;
 import com.learncha.api.auth.web.AuthDto.SignUpResponse;
+import com.learncha.api.auth.web.AuthDto.VerifyRequestDto;
 import com.learncha.api.common.security.jwt.model.JWTManager.JwtTokenBox;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -20,6 +23,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -32,6 +36,23 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthApiController {
 
     private final AuthService authService;
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginSuccessResponse> login(@RequestBody @Valid AuthDto.LoginRequestDto loginDto) {
+        JwtTokenBox jwtTokenBox = authService.login(loginDto);
+
+        LoginSuccessResponse res = LoginSuccessResponse.builder()
+            .email(loginDto.getEmail())
+            .accessToken(jwtTokenBox.getAccessToken())
+            .authType(jwtTokenBox.getAuthType())
+            .build();
+
+        String refreshCookie = createCookieOfRefreshToken(jwtTokenBox.getRefreshToken());
+        MultiValueMap<String, String> headers = new HttpHeaders();
+        headers.add("Set-Cookie", refreshCookie);
+
+        return new ResponseEntity<>(res, headers, HttpStatus.OK);
+    }
 
     @PostMapping("")
     public ResponseEntity<SignUpResponse> signUp(@RequestBody SignUpRequest memberSignUpRequest) {
@@ -70,31 +91,33 @@ public class AuthApiController {
         return ResponseEntity.ok(new AuthCodeResult(email, res));
     }
 
-    @DeleteMapping("/email")
-    public ResponseEntity<Void> removeAuth(@RequestParam String email) {
-        authService.removeAuth(email);
+    @DeleteMapping
+    public ResponseEntity<Void> deleteMember(
+        @RequestBody @Valid AuthDto.DeleteMemberRequestDto deleteMemberDto
+    ) {
+        authService.deleteMember(deleteMemberDto);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<LoginSuccessResponse> login(@RequestBody @Valid AuthDto.LoginRequestDto loginDto) {
-        JwtTokenBox jwtTokenBox = authService.login(loginDto);
-        LoginSuccessResponse res = LoginSuccessResponse.builder()
-            .email(loginDto.getEmail())
-            .accessToken(jwtTokenBox.getAccessToken())
-            .authType(jwtTokenBox.getAuthType())
-            .build();
-
-        String refreshCookie = createCookieOfRefreshToken(jwtTokenBox.getRefreshToken());
-        MultiValueMap<String, String> headers = new HttpHeaders();
-        headers.add("Set-Cookie", refreshCookie);
-
-        return new ResponseEntity<>(res, headers, HttpStatus.OK);
+    @PostMapping("/verify")
+    public ResponseEntity<?> memberVerify(@RequestBody VerifyRequestDto verifyRequestDto) {
+        boolean res = authService.verifyMember(verifyRequestDto);
+        return ResponseEntity.ok(new MemberVerifyResponse(res));
     }
 
-    @DeleteMapping
-    public ResponseEntity<Void> deleteMember(@RequestBody @Valid AuthDto.DeleteMemberRequestDto deleteMemberDto) {
-        authService.deleteMember(deleteMemberDto);
+    /**
+     * 임시 패스워드 발급
+     */
+    @GetMapping("/temporary-password")
+    public ResponseEntity<Void> getTemporaryPassword(
+        @RequestParam @NotBlank(message = "Email is required") String email) {
+        authService.sendTemporaryPasswordAndUpdatePasswordToTemporary(email);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("")
+    public ResponseEntity<Void> modifyPassword(@RequestBody PasswordUpdateDto updatePasswordDto) {
+        authService.updatePasswordToNewPassword(updatePasswordDto);
         return ResponseEntity.ok().build();
     }
 

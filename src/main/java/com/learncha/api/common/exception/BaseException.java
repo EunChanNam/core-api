@@ -5,7 +5,12 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 public class BaseException extends RuntimeException {
+
     private ErrorCode errorCode;
+
+    public BaseException(String msg) {
+        super(msg);
+    }
 
     public BaseException(ErrorCode errorCode) {
         super(errorCode.getErrorMsg());

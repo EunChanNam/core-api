@@ -5,6 +5,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import lombok.Getter;
+import org.springframework.security.authentication.AccountExpiredException;
+import org.springframework.security.authentication.CredentialsExpiredException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -54,5 +58,21 @@ public class UserDetailsImpl implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public void checkValidation() {
+        if (!this.isAccountNonLocked()) {
+            throw new LockedException("User account is locked");
+        }
+        if (!this.isEnabled()) {
+            throw new DisabledException("User is disabled");
+        }
+        if (!this.isAccountNonExpired()) {
+            throw new AccountExpiredException("User account has expired");
+        }
+
+        if (!this.isCredentialsNonExpired()) {
+            throw new CredentialsExpiredException("Uer credential expired");
+        }
     }
 }

@@ -6,9 +6,13 @@ import com.learncha.api.auth.domain.Member.Status;
 import com.learncha.api.auth.repository.MemberRepository;
 import com.learncha.api.auth.web.AuthDto.DeleteMemberRequestDto;
 import com.learncha.api.auth.web.AuthDto.LoginRequestDto;
+import com.learncha.api.auth.web.AuthDto.PasswordUpdateDto;
 import com.learncha.api.auth.web.AuthDto.SignUpRequest;
 import com.learncha.api.auth.web.AuthDto.SignUpResponse;
+import com.learncha.api.auth.web.AuthDto.VerifyRequestDto;
+import com.learncha.api.common.error.ErrorCode;
 import com.learncha.api.common.exception.AlreadyAuthenticatedEmail;
+import com.learncha.api.common.exception.EntityNotFoundException;
 import com.learncha.api.common.exception.InvalidParamException;
 import com.learncha.api.common.security.jwt.model.JWTManager;
 import com.learncha.api.common.security.jwt.model.JWTManager.JwtTokenBox;
@@ -20,14 +24,10 @@ import javax.mail.internet.MimeMessage;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.authentication.AccountExpiredException;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.CredentialsExpiredException;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.LockedException;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +45,16 @@ public class AuthService {
     @Value("spring.mail.username")
     private String mailServerUsername;
 
+    public JwtTokenBox login(LoginRequestDto loginDto) {
+        String loginEmail = loginDto.getEmail();
+        UserDetailsImpl userDetails = customUserDetailService.loadUserByUsername(loginEmail);
+        userDetails.checkValidation();
+
+        passwordMatchingCheck(loginDto.getPassword(), userDetails.getPassword());
+
+        return jwtManager.generateTokenBox(userDetails);
+    }
+
     @Transactional
     public SignUpResponse signUpMember(SignUpRequest signUpRequest) {
         String encodedPassword = passwordEncoder.encode(signUpRequest.getPassword());
@@ -53,8 +63,13 @@ public class AuthService {
         Member storedMember = memberRepository.findByEmail(email)
             .orElseThrow(() -> new InvalidParamException("해당 Email로 인증된 사용자가 없습니다."));
 
+        if(storedMember.isActive())
+            throw new InvalidParamException("이미 가입된 Email 입니다.");
 
-        Member authenticatedMember = storedMember.updateEmailAuthenticatedUser(
+        if(storedMember.isDeleted())
+            throw new InvalidParamException("회원가입을 위해선 Email 인증이 필요합니다.");
+
+        Member authenticatedMember = storedMember.updateToEmailActiveUser(
             signUpRequest,
             encodedPassword
         );
@@ -67,6 +82,7 @@ public class AuthService {
             .authType(authenticatedMember.getAuthType().getDescription()).build();
     }
 
+    @Transactional
     public void emailAuthentication(String email) {
         memberRepository.findByEmail(email)
             .ifPresentOrElse(
@@ -91,32 +107,6 @@ public class AuthService {
                 });
     }
 
-    private Member sendFirstAuthCodeToEmail(String email) {
-        Member initMember = Member.createInitEmailMember(email, AuthType.EMAIL);
-        MimeMessage message;
-
-        try {
-            message = createMessage(initMember, email);
-        } catch(Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        javaMailSender.send(message); return initMember;
-    }
-
-    private Member reSendAuthCodeToEmail(Member member, String email) {
-        MimeMessage message;
-
-        try {
-            message = createMessage(member, email);
-        } catch(Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        javaMailSender.send(message);
-        return member;
-    }
-
     public boolean getAuthResult(String authCode, String email) {
         Member member = memberRepository.findByEmail(email)
             .orElseThrow(InvalidParamException::new);
@@ -137,16 +127,6 @@ public class AuthService {
         }
 
         return res;
-    }
-
-    public JwtTokenBox login(LoginRequestDto loginDto) {
-        String loginEmail = loginDto.getEmail();
-
-        UserDetailsImpl userDetails = customUserDetailService.loadUserByUsername(loginEmail);
-        checkValidation(userDetails);
-        checkPasswordMatch(loginDto.getPassword(), userDetails.getPassword());
-
-        return jwtManager.generateTokenBox(userDetails);
     }
 
     @Transactional
@@ -171,38 +151,43 @@ public class AuthService {
         member.registerReasonOfWithdrawal(deletedReasonBuffer.toString());
     }
 
-    private void checkPasswordMatch(String requestedPw, String storedUserDetailsPw) {
-        if (!this.passwordEncoder.matches(requestedPw, storedUserDetailsPw)) {
-            log.debug("Failed to authenticate since password does not match stored value");
-            throw new BadCredentialsException("Requested Password does not match");
+    @Transactional
+    public void sendTemporaryPasswordAndUpdatePasswordToTemporary(String email) {
+        Member member = memberRepository.findByEmailAndStatusIsNotDeleted(email)
+            .orElseThrow(EntityNotFoundException::new);
+
+        String tempPassword = createRandomStrings();
+        sendTemporaryPw(tempPassword, email);
+
+        member.updatePwToTemporaryPW(passwordEncoder.encode(tempPassword));
+    }
+
+    @Transactional
+    public void updatePasswordToNewPassword(PasswordUpdateDto updatePasswordDto) {
+        Member member = memberRepository.findByEmailAndStatusIsNotDeleted(updatePasswordDto.getEmail())
+            .orElseThrow(() -> new EntityNotFoundException(ErrorCode.EMAIL_NOT_EXIST));
+
+        passwordMatchingCheck(updatePasswordDto.getPassword(), member.getPassword());
+
+        String newEncodedPwd = passwordEncoder.encode(updatePasswordDto.getNewPassword());
+        member.updateNewPassword(newEncodedPwd);
+    }
+
+    public boolean verifyMember(VerifyRequestDto verifyRequestDto) {
+        if(StringUtils.isBlank(verifyRequestDto.getPassword())) {
+            return memberRepository.existsMemberByEmail(verifyRequestDto.getEmail());
+        } else {
+            Member member = memberRepository.findByEmailAndStatusIsNotDeleted(verifyRequestDto.getEmail())
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.EMAIL_NOT_EXIST));
+
+            passwordMatchingCheck(verifyRequestDto.getPassword(), member.getPassword());
+            return true;
         }
     }
 
-    private void checkValidation(UserDetails userDetails) {
-        if (!userDetails.isAccountNonLocked()) {
-            throw new LockedException("User account is locked");
-        }
-        if (!userDetails.isEnabled()) {
-            throw new DisabledException("User is disabled");
-        }
-        if (!userDetails.isAccountNonExpired()) {
-            throw new AccountExpiredException("User account has expired");
-        }
-
-        if (!userDetails.isCredentialsNonExpired()) {
-            throw new CredentialsExpiredException("Uer credential expired");
-        }
-    }
-
-    public void removeAuth(String email) {
-        Member member = memberRepository.findByEmail(email)
-            .orElseThrow(() -> new InvalidParamException("Already Removed Email"));
-
-        memberRepository.deleteById(member.getId());
-    }
-
-    private String createAuthCode() {
-        StringBuffer key = new StringBuffer(); Random rnd = new Random();
+    private String createRandomStrings() {
+        StringBuffer key = new StringBuffer();
+        Random rnd = new Random();
 
         for(int i = 0; i < 8; i++) { // 인증코드 8자리
             int index = rnd.nextInt(3); // 0~2 까지 랜덤
@@ -224,8 +209,54 @@ public class AuthService {
         } return key.toString();
     }
 
+    private Member sendFirstAuthCodeToEmail(String email) {
+        Member initMember = Member.createInitEmailMember(email, AuthType.EMAIL);
+        MimeMessage message;
+
+        try {
+            message = createMessage(initMember, email);
+        } catch(Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        javaMailSender.send(message);
+        return initMember;
+    }
+
+    private void passwordMatchingCheck(String requestedPw, String storedPassword) {
+        if (!this.passwordEncoder.matches(requestedPw, storedPassword)) {
+            throw new BadCredentialsException("잘못된 패스워드 입니다.");
+        }
+    }
+
+
+    private Member reSendAuthCodeToEmail(Member member, String email) {
+        MimeMessage message;
+
+        try {
+            message = createMessage(member, email);
+        } catch(Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        javaMailSender.send(message);
+        return member;
+    }
+
+    private void sendTemporaryPw(String tempPw, String email) {
+        MimeMessage message;
+        try {
+            message = createTemporaryPwFormat(tempPw, email);
+        } catch(Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException(e);
+        }
+
+        javaMailSender.send(message);
+    }
+
     private MimeMessage createMessage(Member member, String to) throws Exception {
-        String authCode = createAuthCode();
+        String authCode = createRandomStrings();
         member.setAuthenticationCode(authCode);
 
         MimeMessage message = javaMailSender.createMimeMessage();
@@ -240,6 +271,29 @@ public class AuthService {
         msgg += "<h3 style='color:blue;'>회원가입 인증 코드입니다.</h3>";
         msgg += "<div style='font-size:130%'>"; msgg += "CODE : <strong>";
         msgg += authCode + "</strong><div><br/> "; msgg += "</div>";
+        message.setText(msgg, "utf-8", "html");
+        message.setFrom(new InternetAddress(mailServerUsername, "learncha"));
+
+        return message;
+    }
+
+    private MimeMessage createTemporaryPwFormat(String tempPw, String to) throws Exception {
+        if(StringUtils.isBlank(tempPw)) {
+            throw new RuntimeException("Temp Password Arg is Null");
+        }
+
+        MimeMessage message = javaMailSender.createMimeMessage();
+
+        message.addRecipients(RecipientType.TO, to);//보내는 대상
+        message.setSubject("임시 비밀번호 발송 테스트");//제목
+
+        String msgg = ""; msgg += "<div style='margin:20px;'>";
+        msgg += "<h1> 안녕하세요 learncha 입니다. </h1>"; msgg += "<br>"; msgg += "<p>아래 임시 비밀번호를 복사해 입력해주세요<p>";
+        msgg += "<br>"; msgg += "<p>감사합니다.<p>"; msgg += "<br>";
+        msgg += "<div align='center' style='border:1px solid black; font-family:verdana';>";
+        msgg += "<h3 style='color:blue;'>임시 비밀번호 입니다.</h3>";
+        msgg += "<div style='font-size:130%'>"; msgg += "CODE : <strong>";
+        msgg += tempPw + "</strong><div><br/> "; msgg += "</div>";
         message.setText(msgg, "utf-8", "html");
         message.setFrom(new InternetAddress(mailServerUsername, "learncha"));
 
