@@ -60,9 +60,18 @@ public class JWTManager {
         return JwtTokenBox.of(token, refreshToken, user.getMember().getAuthType().getDescription(), ACCESS_TOKEN_EXPIRATION_TIME);
     }
 
-    private String generateAccessToken(UserDetailsImpl userDetails) {
+    public String generateAccessToken(UserDetailsImpl userDetails) {
         return Jwts.builder()
             .setSubject(userDetails.getUsername())
+            .setExpiration(new Date(System.currentTimeMillis() + (ACCESS_TOKEN_EXPIRATION_TIME * 1000)))
+            .setIssuedAt(new Date(System.currentTimeMillis()))
+            .signWith(secretKey, SignatureAlgorithm.HS256)
+            .compact();
+    }
+
+    public String generateAccessToken(String email) {
+        return Jwts.builder()
+            .setSubject(email)
             .setExpiration(new Date(System.currentTimeMillis() + (ACCESS_TOKEN_EXPIRATION_TIME * 1000)))
             .setIssuedAt(new Date(System.currentTimeMillis()))
             .signWith(secretKey, SignatureAlgorithm.HS256)

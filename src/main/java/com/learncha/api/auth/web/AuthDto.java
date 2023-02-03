@@ -149,4 +149,13 @@ public class AuthDto {
             this.result = result ? "TRUE" : "FALSE";
         }
     }
+
+    @Getter
+    public static class AccessTokenResponse {
+        private final String accessToken;
+
+        public AccessTokenResponse(String accessToken) {
+            this.accessToken = accessToken;
+        }
+    }
 }

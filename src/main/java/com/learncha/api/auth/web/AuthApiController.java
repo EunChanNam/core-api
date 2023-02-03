@@ -1,6 +1,7 @@
 package com.learncha.api.auth.web;
 
 import com.learncha.api.auth.service.AuthService;
+import com.learncha.api.auth.web.AuthDto.AccessTokenResponse;
 import com.learncha.api.auth.web.AuthDto.AuthCodeResult;
 import com.learncha.api.auth.web.AuthDto.EmailDuplicationResult;
 import com.learncha.api.auth.web.AuthDto.LoginSuccessResponse;
@@ -9,17 +10,20 @@ import com.learncha.api.auth.web.AuthDto.PasswordUpdateDto;
 import com.learncha.api.auth.web.AuthDto.SignUpRequest;
 import com.learncha.api.auth.web.AuthDto.SignUpResponse;
 import com.learncha.api.auth.web.AuthDto.VerifyRequestDto;
+import com.learncha.api.common.exception.InvalidParamException;
 import com.learncha.api.common.security.jwt.model.JWTManager.JwtTokenBox;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseCookie.ResponseCookieBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -91,6 +95,17 @@ public class AuthApiController {
         return ResponseEntity.ok(new AuthCodeResult(email, res));
     }
 
+    @GetMapping("/access-token")
+    public ResponseEntity<AccessTokenResponse> getAccessTokenUsingRefreshToken(
+        @CookieValue(name = "refresh_token") String refreshToken
+    ) {
+        if(StringUtils.isBlank(refreshToken))
+            throw new InvalidParamException("Refresh Token이 존재하지 않습니다.");
+
+        return ResponseEntity.ok(authService.getAccessToken(refreshToken));
+    }
+
+
     @DeleteMapping
     public ResponseEntity<Void> deleteMember(
         @RequestBody @Valid AuthDto.DeleteMemberRequestDto deleteMemberDto
@@ -100,7 +115,7 @@ public class AuthApiController {
     }
 
     @PostMapping("/verify")
-    public ResponseEntity<?> memberVerify(@RequestBody VerifyRequestDto verifyRequestDto) {
+    public ResponseEntity<MemberVerifyResponse> memberVerify(@RequestBody VerifyRequestDto verifyRequestDto) {
         boolean res = authService.verifyMember(verifyRequestDto);
         return ResponseEntity.ok(new MemberVerifyResponse(res));
     }

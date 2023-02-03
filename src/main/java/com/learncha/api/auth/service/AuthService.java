@@ -3,7 +3,10 @@ package com.learncha.api.auth.service;
 import com.learncha.api.auth.domain.Member;
 import com.learncha.api.auth.domain.Member.AuthType;
 import com.learncha.api.auth.domain.Member.Status;
+import com.learncha.api.auth.domain.MemberRefreshToken;
 import com.learncha.api.auth.repository.MemberRepository;
+import com.learncha.api.auth.repository.RefreshTokenRepository;
+import com.learncha.api.auth.web.AuthDto.AccessTokenResponse;
 import com.learncha.api.auth.web.AuthDto.DeleteMemberRequestDto;
 import com.learncha.api.auth.web.AuthDto.LoginRequestDto;
 import com.learncha.api.auth.web.AuthDto.PasswordUpdateDto;
@@ -13,10 +16,14 @@ import com.learncha.api.auth.web.AuthDto.VerifyRequestDto;
 import com.learncha.api.common.error.ErrorCode;
 import com.learncha.api.common.exception.AlreadyAuthenticatedEmail;
 import com.learncha.api.common.exception.EntityNotFoundException;
+import com.learncha.api.common.exception.InvalidJwtTokenException;
 import com.learncha.api.common.exception.InvalidParamException;
+import com.learncha.api.common.exception.RefreshTokenExpiredException;
 import com.learncha.api.common.security.jwt.model.JWTManager;
 import com.learncha.api.common.security.jwt.model.JWTManager.JwtTokenBox;
+import com.learncha.api.common.security.jwt.model.JWTManager.TokenVerifyResult;
 import com.learncha.api.common.security.jwt.model.UserDetailsImpl;
+import io.jsonwebtoken.ExpiredJwtException;
 import java.util.Random;
 import javax.mail.Message.RecipientType;
 import javax.mail.internet.InternetAddress;
@@ -28,6 +35,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -40,19 +49,54 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final CustomUserDetailService customUserDetailService;
     private final MemberRepository memberRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final JWTManager jwtManager;
 
     @Value("spring.mail.username")
     private String mailServerUsername;
 
+    @Transactional
     public JwtTokenBox login(LoginRequestDto loginDto) {
         String loginEmail = loginDto.getEmail();
         UserDetailsImpl userDetails = customUserDetailService.loadUserByUsername(loginEmail);
         userDetails.checkValidation();
-
         passwordMatchingCheck(loginDto.getPassword(), userDetails.getPassword());
 
-        return jwtManager.generateTokenBox(userDetails);
+        JwtTokenBox tokenBox = jwtManager.generateTokenBox(userDetails);;
+
+        MemberRefreshToken refreshToken = MemberRefreshToken.of(
+            userDetails.getMember().getMemberToken(),
+            tokenBox.getRefreshToken()
+        );
+
+        refreshTokenRepository.save(refreshToken);
+        return tokenBox;
+    }
+
+    public AccessTokenResponse getAccessToken(String refreshToken) {
+        // refresh token verity 하고
+        TokenVerifyResult verifyResult;
+        try {
+            verifyResult = jwtManager.verifyToken(refreshToken);
+        } catch(ExpiredJwtException ex) {
+            throw new RefreshTokenExpiredException("재 로그인이 필요합니다.");
+        }
+
+        if(! verifyResult.isVerified())
+            throw new InvalidJwtTokenException(verifyResult.getMessage());
+
+        String email = verifyResult.getEmail();
+        String accessToken = jwtManager.generateAccessToken(email);
+        UserDetailsImpl member = customUserDetailService.loadUserByUsername(email);
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+            member.getUsername(),
+            member.getPassword(),
+            member.getAuthorities()
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        return new AccessTokenResponse(accessToken);
+
     }
 
     @Transactional
