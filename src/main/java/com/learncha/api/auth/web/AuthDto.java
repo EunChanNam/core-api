@@ -3,7 +3,6 @@ package com.learncha.api.auth.web;
 import com.learncha.api.auth.domain.Member.AuthType;
 import com.learncha.api.common.exception.InvalidParamException;
 import java.util.List;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
@@ -35,7 +34,6 @@ public class AuthDto {
         private String email;
         @Size(min=1, message = "최소 1개의 사유를 선택해주세요.")
         private List<String> selectedReason;
-        @NotBlank(message = "탈퇴사유는 필수 값 입니다.")
         private String etcMsg;
     }
 
