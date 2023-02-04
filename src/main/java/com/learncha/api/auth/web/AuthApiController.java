@@ -66,10 +66,14 @@ public class AuthApiController {
     ) {
         Cookie[] cookies = request.getCookies();
 
-        for(Cookie cookie : cookies) {
-            if(cookie.getName().equals("refresh_token")) {
-                cookie.setMaxAge(0);
+        try {
+            for(Cookie cookie : cookies) {
+                if(cookie.getName().equals("refresh_token")) {
+                    cookie.setMaxAge(0);
+                }
             }
+        } catch(NullPointerException ex) {
+            throw new InvalidParamException("이미 로그아웃된 계정입니다.");
         }
 
         String cookie = cookieExpire();

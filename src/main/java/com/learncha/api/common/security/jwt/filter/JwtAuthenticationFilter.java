@@ -67,11 +67,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
 
-
     private void setAuthentication(TokenVerifyResult verifyResult) {
         UserDetails member = customUserDetailService.loadUserByUsername(verifyResult.getEmail());
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-            member.getUsername(),
+            member,
             member.getPassword(),
             member.getAuthorities()
         );

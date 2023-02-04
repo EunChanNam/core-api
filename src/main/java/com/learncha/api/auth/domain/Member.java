@@ -85,8 +85,8 @@ public class Member extends TimeStamp {
     @Getter
     @RequiredArgsConstructor
     public enum MemberRole {
-        ROLE_USER("USER"),
-        ROLE_ADMIN("ADMIN");
+        ROLE_USER("ROLE_USER"),
+        ROLE_ADMIN("ROLE_ADMIN");
         private final String description;
     }
 
