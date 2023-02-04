@@ -46,6 +46,7 @@ public class SecurityConfig {
             .and()
             .authorizeRequests()
                 .antMatchers(HttpMethod.POST, "/api/v1/auth").permitAll()
+                .antMatchers(HttpMethod.POST,  "/api/v1/auth/logout").authenticated()
                 .antMatchers(HttpMethod.GET, "/api/v1/auth").permitAll()
                 .antMatchers(HttpMethod.GET,  "/api/v1/auth/access-token").permitAll()
                 .antMatchers(HttpMethod.PUT,  "/api/v1/auth").authenticated()

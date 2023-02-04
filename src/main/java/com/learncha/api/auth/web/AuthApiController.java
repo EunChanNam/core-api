@@ -12,6 +12,8 @@ import com.learncha.api.auth.web.AuthDto.SignUpResponse;
 import com.learncha.api.auth.web.AuthDto.VerifyRequestDto;
 import com.learncha.api.common.exception.InvalidParamException;
 import com.learncha.api.common.security.jwt.model.JWTManager.JwtTokenBox;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +58,25 @@ public class AuthApiController {
         headers.add("Set-Cookie", refreshCookie);
 
         return new ResponseEntity<>(res, headers, HttpStatus.OK);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<LoginSuccessResponse> logout(
+        HttpServletRequest request
+    ) {
+        Cookie[] cookies = request.getCookies();
+
+        for(Cookie cookie : cookies) {
+            if(cookie.getName().equals("refresh_token")) {
+                cookie.setMaxAge(0);
+            }
+        }
+
+        String cookie = cookieExpire();
+        MultiValueMap<String, String> headers = new HttpHeaders();
+        headers.add("Set-Cookie", cookie);
+
+        return new ResponseEntity<>(headers, HttpStatus.OK);
     }
 
     @PostMapping("")
@@ -142,5 +163,14 @@ public class AuthApiController {
         refreshTokenCookie.path("/");
         refreshTokenCookie.sameSite("None");
         return refreshTokenCookie.build().toString();
+    }
+
+    private String cookieExpire() {
+        ResponseCookieBuilder cookie = ResponseCookie.from("refresh_token", null);
+        cookie.httpOnly(true);
+        cookie.maxAge(0);
+        cookie.path("/");
+        cookie.sameSite("None");
+        return cookie.build().toString();
     }
 }
