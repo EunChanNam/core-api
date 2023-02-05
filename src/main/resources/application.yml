@@ -63,6 +63,15 @@ spring:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${google.client-id}
+            client-secret: ${google.client-secret}
+            scope: profile,email
+
 logging:
   level:
     com.zaxxer.hikari.pool.HikariPool: debug
@@ -128,6 +137,16 @@ spring:
 
   flyway:
     enabled: false
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${google.client-id}
+            client-secret: ${google.client-secret}
+            scope: profile,email
+
 
 aws:
   paramstore:

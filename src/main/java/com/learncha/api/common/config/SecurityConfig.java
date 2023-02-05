@@ -1,6 +1,8 @@
 package com.learncha.api.common.config;
 
+import com.learncha.api.auth.service.GoogleLoginService;
 import com.learncha.api.common.security.jwt.filter.JwtAuthenticationFilter;
+import com.learncha.api.common.security.jwt.handler.CustomOAuth2LoginSuccessHandler;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +21,10 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @RequiredArgsConstructor
 @EnableWebSecurity
 public class SecurityConfig {
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final GoogleLoginService googleLoginService;
+    private final CustomOAuth2LoginSuccessHandler successHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -55,6 +60,13 @@ public class SecurityConfig {
                 .antMatchers("/api/**").authenticated()
             .and()
             .addFilterAt(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .exceptionHandling()
+            .and()
+            .oauth2Login()
+            .userInfoEndpoint()
+            .userService(googleLoginService)
+            .and()
+            .successHandler(successHandler)
             ;
 
         return http.build();

@@ -104,8 +104,28 @@ public class Member extends TimeStamp {
         this.authType = authType;
     }
 
+    public Member(String email, AuthType google, String firstName, String lastName) {
+        this.email = email;
+        this.memberToken = TokeGenerator.randomCharacterWithPrefix(MEMBER_PREFIX);
+        this.authType = google;
+        this.firstName = firstName;
+        this.lastName =  lastName;
+        this.status = Status.ACTIVE;
+        this.authority = MemberRole.ROLE_USER;
+    }
+
+
     public static Member createInitEmailMember(String email, AuthType authType) {
         return new Member(email, authType);
+    }
+
+    public static Member createGoogleAuthMember(GoogleUserProfile googleUserProfile) {
+        return new Member(
+            googleUserProfile.getEmail(),
+            AuthType.GOOGLE,
+            googleUserProfile.getGivenName(),
+            googleUserProfile.getFamilyName()
+        );
     }
 
     public Member updateToEmailActiveUser(SignUpRequest signUpRequest, String encodedPw) {
@@ -143,6 +163,12 @@ public class Member extends TimeStamp {
         this.reasonWithdrawal = null;
         this.status = Status.NEED_AUTHENTICATED;
         this.authType = AuthType.EMAIL;
+        return this;
+    }
+
+    public Member updateMemberInfoFromGoogle(GoogleUserProfile googleUserProfile) {
+        this.lastName = googleUserProfile.getFamilyName();
+        this.firstName = googleUserProfile.getGivenName();
         return this;
     }
 

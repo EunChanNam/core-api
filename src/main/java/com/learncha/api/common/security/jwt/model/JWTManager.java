@@ -1,5 +1,6 @@
 package com.learncha.api.common.security.jwt.model;
 
+import com.learncha.api.auth.domain.Member.AuthType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
@@ -60,6 +61,12 @@ public class JWTManager {
         return JwtTokenBox.of(token, refreshToken, user.getMember().getAuthType().getDescription(), ACCESS_TOKEN_EXPIRATION_TIME);
     }
 
+    public JwtTokenBox generateTokenBoxFromGoogleAuth(String email) {
+        String token = generateAccessToken(email);
+        String refreshToken = generateRefreshToken(email);
+        return JwtTokenBox.of(token, refreshToken, AuthType.GOOGLE.getDescription(), ACCESS_TOKEN_EXPIRATION_TIME);
+    }
+
     public String generateAccessToken(UserDetailsImpl userDetails) {
         return Jwts.builder()
             .setSubject(userDetails.getUsername())
@@ -81,6 +88,15 @@ public class JWTManager {
     private String generateRefreshToken(UserDetailsImpl userDetails) {
         return Jwts.builder()
             .setSubject(userDetails.getUsername())
+            .setExpiration(new Date(System.currentTimeMillis() + (REFRESH_TOKEN_EXPIRATION_TIME * 1000)))
+            .setIssuedAt(new Date(System.currentTimeMillis()))
+            .signWith(secretKey, SignatureAlgorithm.HS256)
+            .compact();
+    }
+
+    private String generateRefreshToken(String email) {
+        return Jwts.builder()
+            .setSubject(email)
             .setExpiration(new Date(System.currentTimeMillis() + (REFRESH_TOKEN_EXPIRATION_TIME * 1000)))
             .setIssuedAt(new Date(System.currentTimeMillis()))
             .signWith(secretKey, SignatureAlgorithm.HS256)
