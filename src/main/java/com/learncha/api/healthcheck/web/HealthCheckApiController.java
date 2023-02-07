@@ -16,5 +16,4 @@ public class HealthCheckApiController {
         log.info("health check start");
         return ResponseEntity.ok().build();
     }
-
 }
