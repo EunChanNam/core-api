@@ -143,7 +143,7 @@ spring:
       client:
         registration:
           google:
-            redirect-uri: https://learncha.com/login/oauth2/code/google
+            redirect-uri: https://api.learncha.com/login/oauth2/code/google
             client-id: ${google.client-id}
             client-secret: ${google.client-secret}
             scope: profile,email
