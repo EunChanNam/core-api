@@ -84,12 +84,12 @@ public class AuthDto {
     }
 
     @Getter
-    public static class EmailDuplicationResult {
+    public static class EmailAvliableCheckResponse {
         private final String email;
         private final String isDuplicated;
 
         @Builder
-        public EmailDuplicationResult(String email, boolean isDuplicated) {
+        public EmailAvliableCheckResponse(String email, boolean isDuplicated) {
             this.email = email;
             this.isDuplicated = isDuplicated ? "TRUE" : "FALSE";
         }

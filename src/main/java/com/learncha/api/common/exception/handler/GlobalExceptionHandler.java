@@ -4,9 +4,15 @@ import com.learncha.api.common.error.ErrorResponse;
 import com.learncha.api.common.exception.AlreadyAuthenticatedEmail;
 import com.learncha.api.common.exception.EntityNotFoundException;
 import com.learncha.api.common.exception.InvalidParamException;
+import java.util.Iterator;
+import javax.swing.SpringLayout.Constraints;
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import javax.validation.metadata.ConstraintDescriptor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -34,6 +40,18 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
         log.debug(ex.getMessage());
         return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getFieldError());
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ErrorResponse handleConstraintViolationException(ConstraintViolationException ex) {
+        log.warn(ex.getMessage());
+        /**
+         * ex
+         *  error msg: isEmailAvailable.email: 이메일은 필수 값입니다. -> 이메일은 필수 값입니다.
+         */
+        String [] strings = ex.getMessage().split(": ");
+        return ErrorResponse.of(HttpStatus.BAD_REQUEST, strings[1]);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)

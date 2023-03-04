@@ -3,7 +3,7 @@ package com.learncha.api.auth.web;
 import com.learncha.api.auth.service.AuthService;
 import com.learncha.api.auth.web.AuthDto.AccessTokenResponse;
 import com.learncha.api.auth.web.AuthDto.AuthCodeResult;
-import com.learncha.api.auth.web.AuthDto.EmailDuplicationResult;
+import com.learncha.api.auth.web.AuthDto.EmailAvliableCheckResponse;
 import com.learncha.api.auth.web.AuthDto.LoginSuccessResponse;
 import com.learncha.api.auth.web.AuthDto.MemberVerifyResponse;
 import com.learncha.api.auth.web.AuthDto.PasswordUpdateDto;
@@ -12,6 +12,7 @@ import com.learncha.api.auth.web.AuthDto.SignUpResponse;
 import com.learncha.api.auth.web.AuthDto.VerifyRequestDto;
 import com.learncha.api.common.exception.InvalidParamException;
 import com.learncha.api.common.security.jwt.model.JWTManager.JwtTokenBox;
+import java.util.regex.Pattern;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -25,6 +26,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseCookie.ResponseCookieBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Validated
 @Slf4j
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
@@ -90,16 +93,11 @@ public class AuthApiController {
     }
 
     @GetMapping("")
-    public ResponseEntity<EmailDuplicationResult> checkDuplicatedEmail(@RequestParam String email) {
+    public ResponseEntity<EmailAvliableCheckResponse> isEmailAvailable(
+        @RequestParam @NotBlank(message = "이메일은 필수 값입니다.") String email
+    ) {
         log.info("request email: {}", email);
-        boolean isDuplicated = authService.isAvailableEmail(email);
-
-        EmailDuplicationResult response = EmailDuplicationResult.builder()
-            .email(email)
-            .isDuplicated(isDuplicated)
-            .build();
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(authService.isAvailableEmail(email));
     }
 
     @PostMapping("/send-code")

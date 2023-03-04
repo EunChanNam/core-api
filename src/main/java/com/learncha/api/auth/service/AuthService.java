@@ -8,6 +8,7 @@ import com.learncha.api.auth.repository.MemberRepository;
 import com.learncha.api.auth.repository.RefreshTokenRepository;
 import com.learncha.api.auth.web.AuthDto.AccessTokenResponse;
 import com.learncha.api.auth.web.AuthDto.DeleteMemberRequestDto;
+import com.learncha.api.auth.web.AuthDto.EmailAvliableCheckResponse;
 import com.learncha.api.auth.web.AuthDto.LoginRequestDto;
 import com.learncha.api.auth.web.AuthDto.PasswordUpdateDto;
 import com.learncha.api.auth.web.AuthDto.SignUpRequest;
@@ -24,11 +25,11 @@ import com.learncha.api.common.security.jwt.model.JWTManager.JwtTokenBox;
 import com.learncha.api.common.security.jwt.model.JWTManager.TokenVerifyResult;
 import com.learncha.api.common.security.jwt.model.UserDetailsImpl;
 import io.jsonwebtoken.ExpiredJwtException;
+import java.util.Optional;
 import java.util.Random;
 import javax.mail.Message.RecipientType;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -39,6 +40,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -138,7 +140,7 @@ public class AuthService {
                         return;
                     }
 
-                    if(member.isAuthenticated()) {
+                    if(member.isCertificated()) {
                         throw new AlreadyAuthenticatedEmail();
                     } else if(member.isNeedEmailAuthentication()) {
                         Member reMember = reSendAuthCodeToEmail(member, email);
@@ -164,13 +166,21 @@ public class AuthService {
         return savedAuthCode.equals(authCode);
     }
 
-    public boolean isAvailableEmail(String email) {
-        boolean res = memberRepository.existsMemberByEmail(email); if(! res) {
-            Member member = Member.createInitEmailMember(email, AuthType.EMAIL);
-            memberRepository.save(member);
+    @Transactional(readOnly = true)
+    public EmailAvliableCheckResponse isAvailableEmail(String email) {
+        Optional<Member> optionalMember = memberRepository.findByEmail(email);
+        boolean res = true;
+
+        if(optionalMember.isPresent()) {
+            Member member = optionalMember.get();
+            if(member.isDeleted()) res = true;
+            else res =! member.isCertificated();
         }
 
-        return res;
+        return EmailAvliableCheckResponse.builder()
+            .email(email)
+            .isDuplicated(res)
+            .build();
     }
 
     @Transactional
@@ -254,7 +264,7 @@ public class AuthService {
     }
 
     private Member sendFirstAuthCodeToEmail(String email) {
-        Member initMember = Member.createInitEmailMember(email, AuthType.EMAIL);
+        Member initMember = Member.createInitEmailAuthTypeMemberForAuthCode(email, AuthType.EMAIL);
         MimeMessage message;
 
         try {

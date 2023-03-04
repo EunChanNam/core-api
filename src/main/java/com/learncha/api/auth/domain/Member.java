@@ -67,8 +67,8 @@ public class Member extends TimeStamp {
     @Getter
     @RequiredArgsConstructor
     public enum Status {
-        NEED_AUTHENTICATED("인증 필요"),
-        AUTHENTICATED("인증_완료"),
+        NEED_CERTIFICATED("NEED CERTIFICATED"),
+        CERTIFICATED("CERTIFICATED"),
         ACTIVE("ACTIVE"),
         DELETED("DELETED");
         private final String description;
@@ -100,7 +100,7 @@ public class Member extends TimeStamp {
 
         this.memberToken = TokeGenerator.randomCharacterWithPrefix(MEMBER_PREFIX);
         this.email = email;
-        this.status = Status.NEED_AUTHENTICATED;
+        this.status = Status.NEED_CERTIFICATED;
         this.authType = authType;
     }
 
@@ -114,8 +114,10 @@ public class Member extends TimeStamp {
         this.authority = MemberRole.ROLE_USER;
     }
 
-
-    public static Member createInitEmailMember(String email, AuthType authType) {
+    /**
+     * 이메일 인증 코드 체크를 위해 EMAIL_TYPE 의 Member 를 생성
+     */
+    public static Member createInitEmailAuthTypeMemberForAuthCode(String email, AuthType authType) {
         return new Member(email, authType);
     }
 
@@ -138,7 +140,7 @@ public class Member extends TimeStamp {
     }
 
     public boolean isNeedEmailAuthentication() {
-        return Objects.equals(this.status, Status.NEED_AUTHENTICATED);
+        return Objects.equals(this.status, Status.NEED_CERTIFICATED);
     }
 
     public void setRoleAdmin() {
@@ -161,7 +163,7 @@ public class Member extends TimeStamp {
     public Member resetToInitMember() {
         this.password = null;
         this.reasonWithdrawal = null;
-        this.status = Status.NEED_AUTHENTICATED;
+        this.status = Status.NEED_CERTIFICATED;
         this.authType = AuthType.EMAIL;
         return this;
     }
@@ -181,10 +183,10 @@ public class Member extends TimeStamp {
     }
 
     public void emailAuthenticationSuccess() {
-        this.status = Status.AUTHENTICATED;
+        this.status = Status.CERTIFICATED;
     }
 
-    public boolean isAuthenticated() { return Objects.equals(this.status, Status.AUTHENTICATED);}
+    public boolean isCertificated() { return Objects.equals(this.status, Status.CERTIFICATED);}
 
     public boolean isDeleted() { return Objects.equals(this.status, Status.DELETED);}
 
