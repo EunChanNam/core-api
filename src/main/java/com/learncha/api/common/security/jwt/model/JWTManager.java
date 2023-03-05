@@ -55,6 +55,13 @@ public class JWTManager {
         }
     }
 
+
+    public JwtTokenBox generateTokenBox(String email) {
+        String accessToken = generateAccessToken(email);
+        String refreshToken = generateRefreshToken(email);
+        return JwtTokenBox.of(accessToken, refreshToken, ACCESS_TOKEN_EXPIRATION_TIME);
+    }
+
     public JwtTokenBox generateTokenBox(UserDetailsImpl user) {
         String token = generateAccessToken(user);
         String refreshToken = generateRefreshToken(user);
@@ -125,8 +132,19 @@ public class JWTManager {
             this.expiredAt = expiredAt + "s";
         }
 
+        public JwtTokenBox(String accessToken, String refreshToken, Integer accessTokenExpirationTime) {
+            this.accessToken = accessToken;
+            this.refreshToken = refreshToken;
+            this.authType = null;
+            this.expiredAt = accessTokenExpirationTime + "s";
+        }
+
         public static JwtTokenBox of(String accessToken, String refreshToken, String authType, int expireTime) {
             return new JwtTokenBox(accessToken, refreshToken, authType, expireTime);
+        }
+
+        public static JwtTokenBox of(String accessToken, String refreshToken, Integer accessTokenExpirationTime) {
+            return new JwtTokenBox(accessToken, refreshToken, accessTokenExpirationTime);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.learncha.api.auth.web;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.learncha.api.auth.domain.Member.AuthType;
 import com.learncha.api.common.exception.InvalidParamException;
 import java.util.List;
@@ -73,13 +74,24 @@ public class AuthDto {
     public static class SignUpResponse {
         private final String email;
         private final String memberToken;
+        private final String accessToken;
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        private final String refreshToken;
         private final String authType;
 
         @Builder
-        public SignUpResponse(String authType, String email, String memberToken) {
-            this.authType = authType;
+        public SignUpResponse(
+            String email,
+            String memberToken,
+            String accessToken,
+            String refreshToken,
+            String authType
+        ) {
             this.email = email;
             this.memberToken = memberToken;
+            this.accessToken = accessToken;
+            this.refreshToken = refreshToken;
+            this.authType = authType;
         }
     }
 

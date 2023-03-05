@@ -63,7 +63,6 @@ public class AuthService {
         UserDetailsImpl userDetails = customUserDetailService.loadUserByUsername(loginEmail);
         userDetails.checkValidation();
         passwordMatchingCheck(loginDto.getPassword(), userDetails.getPassword());
-
         JwtTokenBox tokenBox = jwtManager.generateTokenBox(userDetails);;
 
         MemberRefreshToken refreshToken = MemberRefreshToken.of(
@@ -109,23 +108,18 @@ public class AuthService {
         Member storedMember = memberRepository.findByEmail(email)
             .orElseThrow(() -> new InvalidParamException("해당 Email로 인증된 사용자가 없습니다."));
 
-        if(storedMember.isActive())
-            throw new InvalidParamException("이미 가입된 Email 입니다.");
+        storedMember.checkDuplicateSignUp();
+        storedMember.checkNeedCertificated();
 
-        if(storedMember.isDeleted())
-            throw new InvalidParamException("회원가입을 위해선 Email 인증이 필요합니다.");
-
-        Member authenticatedMember = storedMember.updateToEmailActiveUser(
-            signUpRequest,
-            encodedPassword
-        );
-
-        memberRepository.save(authenticatedMember);
+        storedMember.updateToEmailActiveUser(signUpRequest, encodedPassword);
+        Member activeUser = memberRepository.save(storedMember);
+        JwtTokenBox tokenBox = jwtManager.generateTokenBox(activeUser.getEmail());
 
         return SignUpResponse.builder()
             .email(email)
-            .memberToken(authenticatedMember.getMemberToken())
-            .authType(authenticatedMember.getAuthType().getDescription()).build();
+            .memberToken(activeUser.getMemberToken())
+            .accessToken(tokenBox.getAccessToken())
+            .authType(activeUser.getAuthType().getDescription()).build();
     }
 
     @Transactional

@@ -12,7 +12,6 @@ import com.learncha.api.auth.web.AuthDto.SignUpResponse;
 import com.learncha.api.auth.web.AuthDto.VerifyRequestDto;
 import com.learncha.api.common.exception.InvalidParamException;
 import com.learncha.api.common.security.jwt.model.JWTManager.JwtTokenBox;
-import java.util.regex.Pattern;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -89,7 +88,13 @@ public class AuthApiController {
     @PostMapping("")
     public ResponseEntity<SignUpResponse> signUp(@RequestBody SignUpRequest memberSignUpRequest) {
         log.info("Sign Up Request: {}", memberSignUpRequest.toString());
-        return ResponseEntity.ok(authService.signUpMember(memberSignUpRequest));
+        SignUpResponse res = authService.signUpMember(memberSignUpRequest);
+
+        String refreshCookie = createCookieOfRefreshToken(res.getRefreshToken());
+        MultiValueMap<String, String> headers = new HttpHeaders();
+        headers.add("Set-Cookie", refreshCookie);
+
+        return new ResponseEntity<>(res, headers, HttpStatus.OK);
     }
 
     @GetMapping("")
@@ -140,6 +145,7 @@ public class AuthApiController {
     @PostMapping("/verify")
     public ResponseEntity<MemberVerifyResponse> memberVerify(@RequestBody VerifyRequestDto verifyRequestDto) {
         boolean res = authService.verifyMember(verifyRequestDto);
+
         return ResponseEntity.ok(new MemberVerifyResponse(res));
     }
 

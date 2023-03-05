@@ -64,6 +64,7 @@ public class Member extends TimeStamp {
     @Column(nullable = true)
     private String authenticationCode;
 
+
     @Getter
     @RequiredArgsConstructor
     public enum Status {
@@ -172,6 +173,18 @@ public class Member extends TimeStamp {
         this.lastName = googleUserProfile.getFamilyName();
         this.firstName = googleUserProfile.getGivenName();
         return this;
+    }
+
+    public void checkDuplicateSignUp() {
+        if(this.status == Status.ACTIVE) {
+            throw new InvalidParamException("이미 가입된 사용자입니다.");
+        }
+    }
+
+    public void checkNeedCertificated() {
+        if(this.status == Status.NEED_CERTIFICATED) {
+            throw new InvalidParamException("이메일 인증이 필요합니다.");
+        }
     }
 
     public void onDelete() {
