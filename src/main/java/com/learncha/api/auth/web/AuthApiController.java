@@ -86,7 +86,7 @@ public class AuthApiController {
     }
 
     @PostMapping("")
-    public ResponseEntity<SignUpResponse> signUp(@RequestBody SignUpRequest memberSignUpRequest) {
+    public ResponseEntity<SignUpResponse> signUp(@RequestBody @Validated SignUpRequest memberSignUpRequest) {
         log.info("Sign Up Request: {}", memberSignUpRequest.toString());
         SignUpResponse res = authService.signUpMember(memberSignUpRequest);
 

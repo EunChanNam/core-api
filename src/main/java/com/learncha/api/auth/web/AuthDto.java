@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.learncha.api.auth.domain.Member.AuthType;
 import com.learncha.api.common.exception.InvalidParamException;
 import java.util.List;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,9 +17,13 @@ public class AuthDto {
     @ToString
     @Getter
     public static class SignUpRequest {
+        @NotBlank(message = "'이름'은 필수 값입니다.")
         private String firstName;
+        @NotBlank(message = "'성'은 필수 값입니다.")
         private String lastName;
+        @NotBlank(message = "email은 필수 값입니다.")
         private String email;
+        @NotBlank(message = "pasword는 필수 값입니다.")
         private String password;
     }
 
