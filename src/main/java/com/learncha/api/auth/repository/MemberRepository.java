@@ -12,10 +12,13 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByEmail(String email);
     Optional<Member> findByEmailAndStatusIsNot(String email, Status status);
     @Query(
-        value = "select * from member as m where m.email = :email and m.status != 'Deleted'",
+        value =
+            "select "
+                + "*"
+         +  " from member as m"
+         + " where m.email = :email and m.status = 'ACTIVE'",
         nativeQuery = true
     )
-    Optional<Member> findByEmailAndStatusIsNotDeleted(@Param(value = "email") String email);
+    Optional<Member> findByEmailAndStatusIsActive(@Param(value = "email") String email);
     boolean existsMemberByEmail(String email);
-    boolean findByPasswordAndStatusIsNot(String password, Status status);
 }

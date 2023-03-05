@@ -26,6 +26,11 @@ spring:
       on-profile: default
     import: 'aws-parameterstore:'
 
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    mode: HTML
+
   lifecycle:
     timeout-per-shutdown-phase: 20s
 
@@ -75,6 +80,7 @@ spring:
 logging:
   level:
     com.zaxxer.hikari.pool.HikariPool: debug
+    org.hibernate.type.descriptor.sql: trace
 
 aws:
   paramstore:

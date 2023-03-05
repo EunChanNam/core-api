@@ -25,6 +25,7 @@ import com.learncha.api.common.security.jwt.model.JWTManager.JwtTokenBox;
 import com.learncha.api.common.security.jwt.model.JWTManager.TokenVerifyResult;
 import com.learncha.api.common.security.jwt.model.UserDetailsImpl;
 import io.jsonwebtoken.ExpiredJwtException;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.Random;
 import javax.mail.Message.RecipientType;
@@ -35,12 +36,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring5.SpringTemplateEngine;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -53,6 +57,7 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final JWTManager jwtManager;
+    private final SpringTemplateEngine templateEngine;
 
     @Value("spring.mail.username")
     private String mailServerUsername;
@@ -75,7 +80,6 @@ public class AuthService {
     }
 
     public AccessTokenResponse getAccessToken(String refreshToken) {
-        // refresh token verity 하고
         TokenVerifyResult verifyResult;
         try {
             verifyResult = jwtManager.verifyToken(refreshToken);
@@ -136,6 +140,8 @@ public class AuthService {
 
                     if(member.isCertificated()) {
                         throw new AlreadyAuthenticatedEmail();
+                    } else if(member.isActive()) {
+                        throw new InvalidParamException("사용할 수 없는 이메일입니다.");
                     } else if(member.isNeedEmailAuthentication()) {
                         Member reMember = reSendAuthCodeToEmail(member, email);
                         memberRepository.save(reMember);
@@ -201,8 +207,12 @@ public class AuthService {
 
     @Transactional
     public void sendTemporaryPasswordAndUpdatePasswordToTemporary(String email) {
-        Member member = memberRepository.findByEmailAndStatusIsNotDeleted(email)
-            .orElseThrow(EntityNotFoundException::new);
+        Member member = memberRepository.findByEmailAndStatusIsActive(email)
+            .orElseThrow(() -> new InvalidParamException("가입된 Email이 아닙니다."));
+
+        if(! member.isActive()) {
+            throw new InvalidParamException("유효하지 않은 이메일 입니다.");
+        }
 
         String tempPassword = createRandomStrings();
         sendTemporaryPw(tempPassword, email);
@@ -212,7 +222,7 @@ public class AuthService {
 
     @Transactional
     public void updatePasswordToNewPassword(PasswordUpdateDto updatePasswordDto) {
-        Member member = memberRepository.findByEmailAndStatusIsNotDeleted(updatePasswordDto.getEmail())
+        Member member = memberRepository.findByEmailAndStatusIsActive(updatePasswordDto.getEmail())
             .orElseThrow(() -> new EntityNotFoundException(ErrorCode.EMAIL_NOT_EXIST));
 
         passwordMatchingCheck(updatePasswordDto.getPassword(), member.getPassword());
@@ -225,7 +235,7 @@ public class AuthService {
         if(StringUtils.isBlank(verifyRequestDto.getPassword())) {
             return memberRepository.existsMemberByEmail(verifyRequestDto.getEmail());
         } else {
-            Member member = memberRepository.findByEmailAndStatusIsNotDeleted(verifyRequestDto.getEmail())
+            Member member = memberRepository.findByEmailAndStatusIsActive(verifyRequestDto.getEmail())
                 .orElseThrow(() -> new EntityNotFoundException(ErrorCode.EMAIL_NOT_EXIST));
 
             passwordMatchingCheck(verifyRequestDto.getPassword(), member.getPassword());
@@ -239,7 +249,6 @@ public class AuthService {
 
         for(int i = 0; i < 8; i++) { // 인증코드 8자리
             int index = rnd.nextInt(3); // 0~2 까지 랜덤
-
             switch(index) {
                 case 0:
                     key.append((char) ((int) (rnd.nextInt(26)) + 97));
@@ -304,28 +313,49 @@ public class AuthService {
     }
 
     private MimeMessage createMessage(Member member, String to) throws Exception {
+        final String template = "email/authcode";
         String authCode = createRandomStrings();
         member.setAuthenticationCode(authCode);
 
         MimeMessage message = javaMailSender.createMimeMessage();
-
-        message.addRecipients(RecipientType.TO, to);//보내는 대상
-        message.setSubject("이메일 인증 테스트");//제목
-
-        String msgg = ""; msgg += "<div style='margin:20px;'>";
-        msgg += "<h1> 안녕하세요 learncha 입니다. </h1>"; msgg += "<br>"; msgg += "<p>아래 코드를 복사해 입력해주세요<p>";
-        msgg += "<br>"; msgg += "<p>감사합니다.<p>"; msgg += "<br>";
-        msgg += "<div align='center' style='border:1px solid black; font-family:verdana';>";
-        msgg += "<h3 style='color:blue;'>회원가입 인증 코드입니다.</h3>";
-        msgg += "<div style='font-size:130%'>"; msgg += "CODE : <strong>";
-        msgg += authCode + "</strong><div><br/> "; msgg += "</div>";
-        message.setText(msgg, "utf-8", "html");
-        message.setFrom(new InternetAddress(mailServerUsername, "learncha"));
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        helper.setSubject("런챠 이메일 인증 코드입니다.");
+        helper.setTo(to);
+        helper.setCc("learcha@gmail.com");
+        HashMap<String, String> emailValues = new HashMap<>();
+        emailValues.put("code", authCode);
+        Context context = new Context();
+        emailValues.forEach(context::setVariable);
+        String html = templateEngine.process(template, context);
+        helper.setText(html, true);
 
         return message;
     }
 
     private MimeMessage createTemporaryPwFormat(String tempPw, String to) throws Exception {
+        final String template = "email/password";
+        if(StringUtils.isBlank(tempPw)) {
+            throw new RuntimeException("Temp Password Arg is Null");
+        }
+
+        MimeMessage message = javaMailSender.createMimeMessage();
+
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        //메일 제목 설정
+        helper.setSubject("런챠 임시 패스워드입니다.");
+        helper.setTo(to);
+        helper.setCc("learcha@gmail.com");
+        HashMap<String, String> emailValues = new HashMap<>();
+        emailValues.put("tempPassword", tempPw);
+        Context context = new Context();
+        emailValues.forEach(context::setVariable);
+        String html = templateEngine.process(template, context);
+        helper.setText(html, true);
+
+        return message;
+    }
+
+    private MimeMessage createTemporaryPwFormat2(String tempPw, String to) throws Exception {
         if(StringUtils.isBlank(tempPw)) {
             throw new RuntimeException("Temp Password Arg is Null");
         }
