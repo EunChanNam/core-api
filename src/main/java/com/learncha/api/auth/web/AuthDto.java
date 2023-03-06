@@ -4,13 +4,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.learncha.api.auth.domain.Member.AuthType;
 import com.learncha.api.common.exception.InvalidParamException;
 import java.util.List;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.repository.query.Param;
 
 public class AuthDto {
 
@@ -21,8 +25,11 @@ public class AuthDto {
         private String firstName;
         @NotBlank(message = "'성'은 필수 값입니다.")
         private String lastName;
+        @Pattern(regexp = "[a-zA-Z0-9]{1,64}@[a-zA-Z0-9_\\-\\.]{1,255}", message = "유효하지 않은 이메일 입니다. 양식을 확인해주세요.")
         @NotBlank(message = "email은 필수 값입니다.")
         private String email;
+
+        @Size(min = 8, max = 15, message = "비밀번호는 최소 8자 최대 15자로 설정되어야 합니다.")
         @NotBlank(message = "pasword는 필수 값입니다.")
         private String password;
     }
