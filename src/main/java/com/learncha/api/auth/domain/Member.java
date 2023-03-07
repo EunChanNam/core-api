@@ -68,7 +68,7 @@ public class Member extends TimeStamp {
     @Getter
     @RequiredArgsConstructor
     public enum Status {
-        NEED_CERTIFICATED("NEED CERTIFICATED"),
+        NEED_CERTIFICATED("CERTIFICATED"),
         CERTIFICATED("CERTIFICATED"),
         ACTIVE("ACTIVE"),
         DELETED("DELETED");
@@ -94,12 +94,15 @@ public class Member extends TimeStamp {
     @Builder
     public Member(
         String email,
+        String authCode,
         AuthType authType
     ) {
         if(StringUtils.isEmpty(email)) throw new InvalidParamException("Email is required!!");
+        if(StringUtils.isBlank(authCode)) throw new InvalidParamException("AuthCode is Required");
         if(authType == null) throw new InvalidParamException("auth type never be null");
 
         this.memberToken = TokeGenerator.randomCharacterWithPrefix(MEMBER_PREFIX);
+        this.authenticationCode = authCode;
         this.email = email;
         this.status = Status.NEED_CERTIFICATED;
         this.authType = authType;
@@ -118,8 +121,8 @@ public class Member extends TimeStamp {
     /**
      * 이메일 인증 코드 체크를 위해 EMAIL_TYPE 의 Member 를 생성
      */
-    public static Member createInitEmailAuthTypeMemberForAuthCode(String email, AuthType authType) {
-        return new Member(email, authType);
+    public static Member createInitEmailTypeMemberForAuthCode(String email, String authCode) {
+        return new Member(email, authCode, AuthType.EMAIL);
     }
 
     public static Member createGoogleAuthMember(GoogleUserProfile googleUserProfile) {
@@ -144,6 +147,9 @@ public class Member extends TimeStamp {
         return lastName + firstName;
     }
 
+    public void changeToNewAuthCode(String authCode) {
+        this.authenticationCode = authCode;
+    }
 
     public boolean isNeedEmailAuthentication() {
         return Objects.equals(this.status, Status.NEED_CERTIFICATED);
@@ -160,10 +166,6 @@ public class Member extends TimeStamp {
     public void registerReasonOfWithdrawal(String reason) {
         if(reason == null) throw new InvalidParamException("reason of withdrawal never be null");
         this.reasonWithdrawal = reason;
-    }
-
-    public void setAuthenticationCode(String authenticationCode) {
-        this.authenticationCode = authenticationCode;
     }
 
     public Member resetToInitMember() {

@@ -3,7 +3,7 @@ package com.learncha.api.auth.web;
 import com.learncha.api.auth.service.AuthService;
 import com.learncha.api.auth.web.AuthDto.AccessTokenResponse;
 import com.learncha.api.auth.web.AuthDto.AuthCodeResult;
-import com.learncha.api.auth.web.AuthDto.EmailAvliableCheckResponse;
+import com.learncha.api.auth.web.AuthDto.EmailAvailableCheckResponse;
 import com.learncha.api.auth.web.AuthDto.LoginInfo;
 import com.learncha.api.auth.web.AuthDto.LoginSuccessResponse;
 import com.learncha.api.auth.web.AuthDto.MemberVerifyResponse;
@@ -12,7 +12,6 @@ import com.learncha.api.auth.web.AuthDto.SignUpRequest;
 import com.learncha.api.auth.web.AuthDto.SignUpResponse;
 import com.learncha.api.auth.web.AuthDto.VerifyRequestDto;
 import com.learncha.api.common.exception.InvalidParamException;
-import com.learncha.api.common.security.jwt.model.JWTManager.JwtTokenBox;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -92,7 +91,7 @@ public class AuthApiController {
     }
 
     @GetMapping("")
-    public ResponseEntity<EmailAvliableCheckResponse> isEmailAvailable(
+    public ResponseEntity<EmailAvailableCheckResponse> isEmailAvailable(
         @RequestParam @NotBlank(message = "이메일은 필수 값입니다.") String email
     ) {
         log.info("request email: {}", email);

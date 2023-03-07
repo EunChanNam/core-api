@@ -8,7 +8,7 @@ import com.learncha.api.auth.repository.MemberRepository;
 import com.learncha.api.auth.repository.RefreshTokenRepository;
 import com.learncha.api.auth.web.AuthDto.AccessTokenResponse;
 import com.learncha.api.auth.web.AuthDto.DeleteMemberRequestDto;
-import com.learncha.api.auth.web.AuthDto.EmailAvliableCheckResponse;
+import com.learncha.api.auth.web.AuthDto.EmailAvailableCheckResponse;
 import com.learncha.api.auth.web.AuthDto.LoginInfo;
 import com.learncha.api.auth.web.AuthDto.LoginRequestDto;
 import com.learncha.api.auth.web.AuthDto.PasswordUpdateDto;
@@ -16,7 +16,6 @@ import com.learncha.api.auth.web.AuthDto.SignUpRequest;
 import com.learncha.api.auth.web.AuthDto.SignUpResponse;
 import com.learncha.api.auth.web.AuthDto.VerifyRequestDto;
 import com.learncha.api.common.error.ErrorCode;
-import com.learncha.api.common.exception.AlreadyAuthenticatedEmail;
 import com.learncha.api.common.exception.EntityNotFoundException;
 import com.learncha.api.common.exception.InvalidJwtTokenException;
 import com.learncha.api.common.exception.InvalidParamException;
@@ -129,29 +128,34 @@ public class AuthService {
             .authType(activeUser.getAuthType().getDescription()).build();
     }
 
+    // todo 제거 가능한지 알아보기
     @Transactional
     public void emailAuthentication(String email) {
+        String authCode = createRandomStrings();
         memberRepository.findByEmail(email)
             .ifPresentOrElse(
                 member -> {
-                    if(member.isDeleted()) {
-                        member = reSendAuthCodeToEmail(member, email);
-                        Member resetMember = member.resetToInitMember();
-                        memberRepository.save(resetMember);
-                        return;
-                    }
+                    if(member.isActive()) throw new InvalidParamException("이미 가입된 이메일 입니다.");
+                    else if(member.isDeleted()) {
+                        // todo 인증코드 발급 객체 생성하여 생성자에서 생성하도록 변경
 
-                    if(member.isCertificated()) {
-                        throw new AlreadyAuthenticatedEmail();
-                    } else if(member.isActive()) {
-                        throw new InvalidParamException("사용할 수 없는 이메일입니다.");
-                    } else if(member.isNeedEmailAuthentication()) {
-                        Member reMember = reSendAuthCodeToEmail(member, email);
-                        memberRepository.save(reMember);
+                        Member initMember = Member.createInitEmailTypeMemberForAuthCode(
+                            email, authCode
+                        );
+                        sendAuthCodeEmail(authCode, email);
+                        memberRepository.save(initMember);
+                    } else {
+                        // NEED CERTIFICATED or CERTIFICATED
+                        // 인증 정보를 덮어씌우고 인증 메일 발송
+                        // 이미 생성된 member token의 주인은 새롭게 시도하는 사람
+                        member.changeToNewAuthCode(authCode);
+                        sendAuthCodeEmail(email, authCode);
+                        memberRepository.save(member);
                     }
                 },
                 () -> {
-                    Member member = sendFirstAuthCodeToEmail(email);
+                    Member member = Member.createInitEmailTypeMemberForAuthCode(email, authCode);
+                    sendAuthCodeEmail(email, authCode);
                     memberRepository.save(member);
                 });
     }
@@ -170,21 +174,12 @@ public class AuthService {
     }
 
     @Transactional(readOnly = true)
-    public EmailAvliableCheckResponse isAvailableEmail(String email) {
-        // todo active 상태일 떄 false 리턴
-        Optional<Member> optionalMember = memberRepository.findByEmail(email);
-        boolean res = true;
+    public EmailAvailableCheckResponse isAvailableEmail(String email) {
+        Optional<Member> optionalMember = memberRepository.findByEmailAndStatusIsActive(email);
 
-        if(optionalMember.isPresent()) {
-            Member member = optionalMember.get();
-            if(member.isDeleted()) res = true;
-            else res =! member.isCertificated();
-        }
-
-        return EmailAvliableCheckResponse.builder()
-            .email(email)
-            .isDuplicated(res)
-            .build();
+        return optionalMember.map(Member::getEmail)
+            .map(EmailAvailableCheckResponse::unavailable)
+            .orElse(EmailAvailableCheckResponse.availableEmail(email));
     }
 
     @Transactional
@@ -270,18 +265,15 @@ public class AuthService {
         } return key.toString();
     }
 
-    private Member sendFirstAuthCodeToEmail(String email) {
-        Member initMember = Member.createInitEmailAuthTypeMemberForAuthCode(email, AuthType.EMAIL);
+    private void sendAuthCodeEmail(String email, String authCode) {
         MimeMessage message;
-
         try {
-            message = createMessage(initMember, email);
+            message = createMessage(authCode, email);
         } catch(Exception e) {
             throw new RuntimeException(e);
         }
 
-        javaMailSender.send(message);
-        return initMember;
+        javaMailSender.send(message);;
     }
 
     private void passwordMatchingCheck(String requestedPw, String storedPassword) {
@@ -291,18 +283,18 @@ public class AuthService {
     }
 
 
-    private Member reSendAuthCodeToEmail(Member member, String email) {
-        MimeMessage message;
-
-        try {
-            message = createMessage(member, email);
-        } catch(Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        javaMailSender.send(message);
-        return member;
-    }
+//    private Member reSendAuthCodeToEmail(Member member, String email) {
+//        String authCode = createRandomStrings();
+//        MimeMessage message;
+//        try {
+//            message = createMessage(member, email);
+//        } catch(Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        javaMailSender.send(message);
+//        return member;
+//    }
 
     private void sendTemporaryPw(String tempPw, String email) {
         MimeMessage message;
@@ -316,10 +308,8 @@ public class AuthService {
         javaMailSender.send(message);
     }
 
-    private MimeMessage createMessage(Member member, String to) throws Exception {
+    private MimeMessage createMessage(String authCode, String to) throws Exception {
         final String template = "email/authcode";
-        String authCode = createRandomStrings();
-        member.setAuthenticationCode(authCode);
 
         MimeMessage message = javaMailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");

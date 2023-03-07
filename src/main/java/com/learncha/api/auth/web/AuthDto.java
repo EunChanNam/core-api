@@ -5,8 +5,7 @@ import com.learncha.api.auth.domain.Member.AuthType;
 import com.learncha.api.common.exception.InvalidParamException;
 import com.learncha.api.common.security.jwt.model.JWTManager.JwtTokenBox;
 import java.util.List;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
+import java.util.function.Function;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -15,7 +14,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.repository.query.Param;
 
 public class AuthDto {
 
@@ -137,14 +135,28 @@ public class AuthDto {
     }
 
     @Getter
-    public static class EmailAvliableCheckResponse {
+    public static class EmailAvailableCheckResponse {
         private final String email;
         private final String isDuplicated;
 
         @Builder
-        public EmailAvliableCheckResponse(String email, boolean isDuplicated) {
+        private EmailAvailableCheckResponse(String email, boolean isDuplicated) {
             this.email = email;
             this.isDuplicated = isDuplicated ? "TRUE" : "FALSE";
+        }
+
+        public static EmailAvailableCheckResponse availableEmail(String email) {
+            return EmailAvailableCheckResponse.builder()
+                .email(email)
+                .isDuplicated(false)
+                .build();
+        }
+
+        public static EmailAvailableCheckResponse unavailable(String email) {
+            return EmailAvailableCheckResponse.builder()
+                .email(email)
+                .isDuplicated(true)
+                .build();
         }
     }
 
