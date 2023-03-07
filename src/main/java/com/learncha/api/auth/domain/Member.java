@@ -140,6 +140,11 @@ public class Member extends TimeStamp {
         return this;
     }
 
+    public String getFullName() {
+        return lastName + firstName;
+    }
+
+
     public boolean isNeedEmailAuthentication() {
         return Objects.equals(this.status, Status.NEED_CERTIFICATED);
     }

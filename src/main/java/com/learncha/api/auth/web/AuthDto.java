@@ -3,6 +3,7 @@ package com.learncha.api.auth.web;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.learncha.api.auth.domain.Member.AuthType;
 import com.learncha.api.common.exception.InvalidParamException;
+import com.learncha.api.common.security.jwt.model.JWTManager.JwtTokenBox;
 import java.util.List;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -83,6 +84,34 @@ public class AuthDto {
     }
 
     @Getter
+    public static class LoginInfo {
+        private final String email;
+        private final String accessToken;
+        private final String refreshToken;
+        private final String fullName;
+        private final String authType;
+
+        private LoginInfo(String email, String accessToken, String refreshToken, String authType, String fullName) {
+            this.email = email;
+            this.accessToken = accessToken;
+            this.refreshToken = refreshToken;
+            this.authType = authType;
+            this.fullName = fullName;
+
+        }
+
+        public static LoginInfo of(JwtTokenBox tokenBox, String email, String fullName) {
+            return new LoginInfo(
+                email,
+                tokenBox.getAccessToken(),
+                tokenBox.getRefreshToken(),
+                tokenBox.getAuthType(),
+                fullName
+            );
+        }
+    }
+
+    @Getter
     public static class SignUpResponse {
         private final String email;
         private final String memberToken;
@@ -122,14 +151,25 @@ public class AuthDto {
     @Getter
     public static class LoginSuccessResponse {
         private final String email;
+        private final String name;
         private final String authType;
         private final String accessToken;
 
         @Builder
-        public LoginSuccessResponse(String email, String authType, String accessToken) {
+        private LoginSuccessResponse(String email, String name, String authType, String accessToken) {
             this.email = email;
+            this.name = name;
             this.authType = authType;
             this.accessToken = accessToken;
+        }
+
+        public static LoginSuccessResponse of(LoginInfo loginInfo) {
+            return LoginSuccessResponse.builder()
+                .email(loginInfo.getEmail())
+                .name(loginInfo.getFullName())
+                .accessToken(loginInfo.getAccessToken())
+                .authType(loginInfo.getAuthType())
+                .build();
         }
     }
 

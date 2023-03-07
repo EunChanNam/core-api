@@ -4,6 +4,7 @@ import com.learncha.api.auth.service.AuthService;
 import com.learncha.api.auth.web.AuthDto.AccessTokenResponse;
 import com.learncha.api.auth.web.AuthDto.AuthCodeResult;
 import com.learncha.api.auth.web.AuthDto.EmailAvliableCheckResponse;
+import com.learncha.api.auth.web.AuthDto.LoginInfo;
 import com.learncha.api.auth.web.AuthDto.LoginSuccessResponse;
 import com.learncha.api.auth.web.AuthDto.MemberVerifyResponse;
 import com.learncha.api.auth.web.AuthDto.PasswordUpdateDto;
@@ -47,18 +48,11 @@ public class AuthApiController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginSuccessResponse> login(@RequestBody @Valid AuthDto.LoginRequestDto loginDto) {
-        JwtTokenBox jwtTokenBox = authService.login(loginDto);
-
-        LoginSuccessResponse res = LoginSuccessResponse.builder()
-            .email(loginDto.getEmail())
-            .accessToken(jwtTokenBox.getAccessToken())
-            .authType(jwtTokenBox.getAuthType())
-            .build();
-
-        String refreshCookie = createCookieOfRefreshToken(jwtTokenBox.getRefreshToken());
+        LoginInfo loginInfo = authService.login(loginDto);
+        LoginSuccessResponse res = LoginSuccessResponse.of(loginInfo);
+        String refreshCookie = createCookieOfRefreshToken(loginInfo.getRefreshToken());
         MultiValueMap<String, String> headers = new HttpHeaders();
         headers.add("Set-Cookie", refreshCookie);
-
         return new ResponseEntity<>(res, headers, HttpStatus.OK);
     }
 

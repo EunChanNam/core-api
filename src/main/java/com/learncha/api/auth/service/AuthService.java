@@ -9,6 +9,7 @@ import com.learncha.api.auth.repository.RefreshTokenRepository;
 import com.learncha.api.auth.web.AuthDto.AccessTokenResponse;
 import com.learncha.api.auth.web.AuthDto.DeleteMemberRequestDto;
 import com.learncha.api.auth.web.AuthDto.EmailAvliableCheckResponse;
+import com.learncha.api.auth.web.AuthDto.LoginInfo;
 import com.learncha.api.auth.web.AuthDto.LoginRequestDto;
 import com.learncha.api.auth.web.AuthDto.PasswordUpdateDto;
 import com.learncha.api.auth.web.AuthDto.SignUpRequest;
@@ -63,20 +64,22 @@ public class AuthService {
     private String mailServerUsername;
 
     @Transactional
-    public JwtTokenBox login(LoginRequestDto loginDto) {
+    public LoginInfo login(LoginRequestDto loginDto) {
         String loginEmail = loginDto.getEmail();
         UserDetailsImpl userDetails = customUserDetailService.loadUserByUsername(loginEmail);
         userDetails.checkValidation();
         passwordMatchingCheck(loginDto.getPassword(), userDetails.getPassword());
         JwtTokenBox tokenBox = jwtManager.generateTokenBox(userDetails);;
 
-        MemberRefreshToken refreshToken = MemberRefreshToken.of(
-            userDetails.getMember().getMemberToken(),
-            tokenBox.getRefreshToken()
+        refreshTokenRepository.save(
+            MemberRefreshToken.of(userDetails.getMember().getMemberToken(), tokenBox.getRefreshToken())
         );
 
-        refreshTokenRepository.save(refreshToken);
-        return tokenBox;
+        return LoginInfo.of(
+            tokenBox,
+            userDetails.getUsername(),
+            userDetails.getMember().getFullName()
+        );
     }
 
     public AccessTokenResponse getAccessToken(String refreshToken) {
@@ -168,6 +171,7 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public EmailAvliableCheckResponse isAvailableEmail(String email) {
+        // todo active 상태일 떄 false 리턴
         Optional<Member> optionalMember = memberRepository.findByEmail(email);
         boolean res = true;
 
