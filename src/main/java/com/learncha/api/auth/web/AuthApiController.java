@@ -60,7 +60,6 @@ public class AuthApiController {
         HttpServletRequest request
     ) {
         Cookie[] cookies = request.getCookies();
-
         try {
             for(Cookie cookie : cookies) {
                 if(cookie.getName().equals("refresh_token")) {
@@ -120,9 +119,6 @@ public class AuthApiController {
     public ResponseEntity<AccessTokenResponse> getAccessTokenUsingRefreshToken(
         @CookieValue(name = "refresh_token") String refreshToken
     ) {
-        if(StringUtils.isBlank(refreshToken))
-            throw new InvalidParamException("Refresh Token이 존재하지 않습니다.");
-
         return ResponseEntity.ok(authService.getAccessToken(refreshToken));
     }
 
