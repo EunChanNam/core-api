@@ -141,7 +141,7 @@ public class AuthService {
                         Member initMember = Member.createInitEmailTypeMemberForAuthCode(
                             email, authCode
                         );
-                        sendAuthCodeEmail(authCode, email);
+                        sendAuthCodeEmail(email, authCode);
                         memberRepository.save(initMember);
                     } else {
                         // NEED CERTIFICATED or CERTIFICATED
@@ -280,20 +280,6 @@ public class AuthService {
             throw new BadCredentialsException("잘못된 패스워드 입니다.");
         }
     }
-
-
-//    private Member reSendAuthCodeToEmail(Member member, String email) {
-//        String authCode = createRandomStrings();
-//        MimeMessage message;
-//        try {
-//            message = createMessage(member, email);
-//        } catch(Exception e) {
-//            throw new RuntimeException(e);
-//        }
-//
-//        javaMailSender.send(message);
-//        return member;
-//    }
 
     private void sendTemporaryPw(String tempPw, String email) {
         MimeMessage message;
