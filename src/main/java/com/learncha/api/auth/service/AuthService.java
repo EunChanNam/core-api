@@ -1,7 +1,6 @@
 package com.learncha.api.auth.service;
 
 import com.learncha.api.auth.domain.Member;
-import com.learncha.api.auth.domain.Member.AuthType;
 import com.learncha.api.auth.domain.Member.Status;
 import com.learncha.api.auth.domain.MemberRefreshToken;
 import com.learncha.api.auth.repository.MemberRepository;
@@ -186,7 +185,7 @@ public class AuthService {
     public void deleteMember(DeleteMemberRequestDto deleteMemberDto) {
         String email = deleteMemberDto.getEmail();
 
-        Member member = memberRepository.findByEmailAndStatusIsNot(email, Status.DELETED)
+        Member member = memberRepository.findByEmailAndStatusIsNotDeleted(email)
             .orElseThrow(() -> new InvalidParamException("Already Deleted Member"));
 
         StringBuffer deletedReasonBuffer = new StringBuffer();

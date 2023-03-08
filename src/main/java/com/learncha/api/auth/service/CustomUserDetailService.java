@@ -21,7 +21,7 @@ public class CustomUserDetailService implements UserDetailsService {
 
     @Override
     public UserDetailsImpl loadUserByUsername(String email) throws UsernameNotFoundException {
-        Member member = memberRepository.findByEmailAndStatusIsNot(email, Status.DELETED)
+        Member member = memberRepository.findByEmailAndStatusIsNotDeleted(email)
             .orElseThrow(() -> new EntityNotFoundException("등록된 Email이 아닙니다.", ErrorCode.COMMON_ENTITY_NOT_FOUND));
         return new UserDetailsImpl(member);
     }
