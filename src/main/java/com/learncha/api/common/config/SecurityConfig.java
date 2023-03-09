@@ -30,24 +30,6 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf().disable()
-            .cors(
-                c -> {
-                    CorsConfigurationSource source = request -> {
-                        CorsConfiguration config = new CorsConfiguration();
-                        config.setAllowedOrigins(
-                            List.of("http://localhost:3000")
-                        );
-                        config.setAllowedMethods(
-                            List.of("*")
-                        );
-
-                        config.addExposedHeader("Authorization");
-                        config.setAllowCredentials(true);
-                        return config;
-                    };
-                    c.configurationSource(source);
-                }
-            )
             .formLogin().disable()
             .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
