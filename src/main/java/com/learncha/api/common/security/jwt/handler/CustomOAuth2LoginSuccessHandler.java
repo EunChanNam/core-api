@@ -6,23 +6,28 @@ import com.learncha.api.auth.web.AuthDto.LoginSuccessResponse;
 import com.learncha.api.common.security.jwt.model.JWTManager;
 import com.learncha.api.common.security.jwt.model.JWTManager.JwtTokenBox;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Map;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class CustomOAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
+public class CustomOAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    private final ObjectMapper objectMapper;
+    @Value("${front.endpoint}")
+    private String FRONT_END_POINT;
     private final JWTManager jwtManager;
 
     @Override
@@ -38,18 +43,19 @@ public class CustomOAuth2LoginSuccessHandler implements AuthenticationSuccessHan
         var name = (String) defaultOAuth2User.getAttributes().get("name");
         JwtTokenBox tokenBox = jwtManager.generateTokenBoxFromGoogleAuth(email);
 
-        LoginSuccessResponse res = LoginSuccessResponse.builder()
-            .email(email)
-            .name(name)
-            .authType(AuthType.GOOGLE.getDescription())
-            .accessToken(tokenBox.getAccessToken())
-            .build();
-
         Cookie cookie = new Cookie("refresh_token", tokenBox.getRefreshToken());
         cookie.setHttpOnly(true);
         cookie.setPath("/");
         response.addCookie(cookie);
-        response.addHeader("Access-Control-Allow-Origin", "http://localhost:3000");
-        objectMapper.writeValue(response.getOutputStream(), res);
+        URI targetUrl = UriComponentsBuilder.fromUriString(FRONT_END_POINT)
+            .queryParam("access-token", tokenBox.getAccessToken())
+            .queryParam("name", name)
+            .queryParam("email", email)
+            .queryParam("auth-type", AuthType.GOOGLE.getDescription())
+            .build()
+            .encode()
+            .toUri();
+
+        getRedirectStrategy().sendRedirect(request, response, targetUrl.toString());
     }
 }

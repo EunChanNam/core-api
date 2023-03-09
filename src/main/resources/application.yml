@@ -77,6 +77,9 @@ spring:
             client-secret: ${google.client-secret}
             scope: profile,email
 
+front:
+  endpoint: https://test-fe-pink.vercel.app/
+
 logging:
   level:
     com.zaxxer.hikari.pool.HikariPool: debug
@@ -170,5 +173,7 @@ jwt:
   secret: ${jwt.secret.key}
 
 
+front:
+  endpoint: https://test-fe-pink.vercel.app/
 
 
