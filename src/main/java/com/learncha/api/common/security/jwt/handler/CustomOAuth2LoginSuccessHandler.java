@@ -49,6 +49,7 @@ public class CustomOAuth2LoginSuccessHandler implements AuthenticationSuccessHan
         cookie.setHttpOnly(true);
         cookie.setPath("/");
         response.addCookie(cookie);
+        response.addHeader("Access-Control-Allow-Origin", "http://localhost:3000");
         objectMapper.writeValue(response.getOutputStream(), res);
     }
 }
