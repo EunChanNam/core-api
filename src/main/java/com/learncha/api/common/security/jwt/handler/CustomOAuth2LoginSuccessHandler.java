@@ -35,11 +35,12 @@ public class CustomOAuth2LoginSuccessHandler implements AuthenticationSuccessHan
         Map<String, Object> attributes = defaultOAuth2User.getAttributes();
 
         String email = (String) attributes.get("email");
-//        defaultOAuth2User.getAttributes().get("name");
+        var name = (String) defaultOAuth2User.getAttributes().get("name");
         JwtTokenBox tokenBox = jwtManager.generateTokenBoxFromGoogleAuth(email);
 
         LoginSuccessResponse res = LoginSuccessResponse.builder()
             .email(email)
+            .name(name)
             .authType(AuthType.GOOGLE.getDescription())
             .accessToken(tokenBox.getAccessToken())
             .build();
