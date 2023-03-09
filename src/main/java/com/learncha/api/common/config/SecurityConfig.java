@@ -35,11 +35,14 @@ public class SecurityConfig {
                     CorsConfigurationSource source = request -> {
                         CorsConfiguration config = new CorsConfiguration();
                         config.setAllowedOrigins(
-                            List.of("*")
+                            List.of("http://localhost:3000")
                         );
                         config.setAllowedMethods(
                             List.of("*")
                         );
+
+                        config.addExposedHeader("Authorization");
+                        config.setAllowCredentials(true);
                         return config;
                     };
                     c.configurationSource(source);

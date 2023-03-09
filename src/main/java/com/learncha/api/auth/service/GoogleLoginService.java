@@ -40,7 +40,7 @@ public class GoogleLoginService implements OAuth2UserService<OAuth2UserRequest, 
         Map<String, Object> attributes = oAuth2User.getAttributes();
         GoogleUserProfile userProfile = OAuthAttributes.extract(registrationId, attributes); // registrationId에 따라 유저 정보를 통해 공통된 UserProfile 객체로 만들어 줌
 
-        Member member = saveOrUpdate(userProfile); // DB에 저장
+        Member member = saveOrUpdate(userProfile);
 
         return new DefaultOAuth2User(
             Collections.singleton(new SimpleGrantedAuthority(member.getAuthority().getDescription())),

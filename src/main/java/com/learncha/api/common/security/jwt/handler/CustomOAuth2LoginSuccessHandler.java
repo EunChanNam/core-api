@@ -35,6 +35,7 @@ public class CustomOAuth2LoginSuccessHandler implements AuthenticationSuccessHan
         Map<String, Object> attributes = defaultOAuth2User.getAttributes();
 
         String email = (String) attributes.get("email");
+//        defaultOAuth2User.getAttributes().get("name");
         JwtTokenBox tokenBox = jwtManager.generateTokenBoxFromGoogleAuth(email);
 
         LoginSuccessResponse res = LoginSuccessResponse.builder()
