@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -47,7 +48,8 @@ public class CustomOAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSucc
         cookie.setHttpOnly(true);
         cookie.setPath("/");
         response.addCookie(cookie);
-        URI targetUrl = UriComponentsBuilder.fromUriString(FRONT_END_POINT)
+
+        URI targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3000")
             .queryParam("access-token", tokenBox.getAccessToken())
             .queryParam("name", name)
             .queryParam("email", email)
