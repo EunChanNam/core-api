@@ -34,7 +34,7 @@ public class SecurityConfig {
             .csrf().disable()
             .cors().configurationSource(request -> {
                 CorsConfiguration cors = new CorsConfiguration();
-                cors.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+                cors.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://learncha.com"));
                 cors.setAllowedMethods(Collections.singletonList("*"));
                 cors.setAllowedHeaders(Collections.singletonList("*"));
                 cors.setAllowCredentials(true);
