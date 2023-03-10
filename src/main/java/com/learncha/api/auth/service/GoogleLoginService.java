@@ -26,6 +26,8 @@ public class GoogleLoginService implements OAuth2UserService<OAuth2UserRequest, 
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+        var uri = userRequest.getAdditionalParameters().get("redirect_uri");
+
         OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate = new DefaultOAuth2UserService();
         OAuth2User oAuth2User = delegate.loadUser(userRequest);
 

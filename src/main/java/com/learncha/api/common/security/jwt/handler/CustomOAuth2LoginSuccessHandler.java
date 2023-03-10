@@ -27,8 +27,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Component
 public class CustomOAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    @Value("${front.endpoint}")
-    private String FRONT_END_POINT;
+    private final String FRONT_END_POINT = "learncha.com";
     private final JWTManager jwtManager;
 
     @Override
@@ -47,9 +46,10 @@ public class CustomOAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSucc
         Cookie cookie = new Cookie("refresh_token", tokenBox.getRefreshToken());
         cookie.setHttpOnly(true);
         cookie.setPath("/");
+        cookie.setDomain(FRONT_END_POINT);
         response.addCookie(cookie);
 
-        URI targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3000")
+        URI targetUrl = UriComponentsBuilder.fromUriString("https://learncha.com" + "/auth/welcome")
             .queryParam("access-token", tokenBox.getAccessToken())
             .queryParam("name", name)
             .queryParam("email", email)

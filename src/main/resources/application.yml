@@ -175,5 +175,6 @@ jwt:
 
 front:
   endpoint: https://test-fe-pink.vercel.app/
+  domain: test-fe-pink.vercel.app
 
 
