@@ -4,14 +4,18 @@ import com.learncha.api.auth.web.AuthDto.SignUpRequest;
 import com.learncha.api.common.abstractentity.TimeStamp;
 import com.learncha.api.common.exception.InvalidParamException;
 import com.learncha.api.common.util.TokeGenerator;
+import java.time.LocalDateTime;
 import java.util.Objects;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import lombok.Builder;
 import lombok.Getter;
@@ -37,13 +41,13 @@ public class Member extends TimeStamp {
     @Column(nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String firstName;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String lastName;
 
     @Enumerated(value = EnumType.STRING)
@@ -51,19 +55,18 @@ public class Member extends TimeStamp {
     private Status status;
 
     @Enumerated(value = EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private AuthType authType;
 
     @Column(nullable = true)
     private String reasonWithdrawal;
 
     @Enumerated(value = EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private MemberRole authority;
 
-    @Column(nullable = true)
-    private String authenticationCode;
-
+    @OneToOne(fetch = FetchType.LAZY, mappedBy = "member", cascade = CascadeType.PERSIST)
+    private AuthCode authCode;
 
     @Getter
     @RequiredArgsConstructor
@@ -94,15 +97,12 @@ public class Member extends TimeStamp {
     @Builder
     public Member(
         String email,
-        String authCode,
         AuthType authType
     ) {
         if(StringUtils.isEmpty(email)) throw new InvalidParamException("Email is required!!");
-        if(StringUtils.isBlank(authCode)) throw new InvalidParamException("AuthCode is Required");
         if(authType == null) throw new InvalidParamException("auth type never be null");
 
         this.memberToken = TokeGenerator.randomCharacterWithPrefix(MEMBER_PREFIX);
-        this.authenticationCode = authCode;
         this.email = email;
         this.status = Status.NEED_CERTIFICATED;
         this.authType = authType;
@@ -121,8 +121,8 @@ public class Member extends TimeStamp {
     /**
      * 이메일 인증 코드 체크를 위해 EMAIL_TYPE 의 Member 를 생성
      */
-    public static Member createInitEmailTypeMemberForAuthCode(String email, String authCode) {
-        return new Member(email, authCode, AuthType.EMAIL);
+    public static Member createInitEmailTypeMemberForAuthCode(String email) {
+        return new Member(email, AuthType.EMAIL);
     }
 
     public static Member createGoogleAuthMember(GoogleUserProfile googleUserProfile) {
@@ -143,12 +143,17 @@ public class Member extends TimeStamp {
         return this;
     }
 
+    public void addAuthCoe(AuthCode authCodeEntity) {
+        this.authCode = authCodeEntity;
+    }
+
     public String getFullName() {
         return lastName + firstName;
     }
 
     public void changeToNewAuthCode(String authCode) {
-        this.authenticationCode = authCode;
+        this.status = Status.NEED_CERTIFICATED;
+        this.authCode.changeAuthCode(authCode);
     }
 
     public void registerReasonOfWithdrawal(String reason) {

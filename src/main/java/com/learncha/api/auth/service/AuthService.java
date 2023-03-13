@@ -1,5 +1,6 @@
 package com.learncha.api.auth.service;
 
+import com.learncha.api.auth.domain.AuthCode;
 import com.learncha.api.auth.domain.Member;
 import com.learncha.api.auth.domain.Member.Status;
 import com.learncha.api.auth.domain.MemberRefreshToken;
@@ -137,10 +138,9 @@ public class AuthService {
                     if(member.isActive()) throw new InvalidParamException("이미 가입된 이메일 입니다.");
                     else if(member.isDeleted()) {
                         // todo 인증코드 발급 객체 생성하여 생성자에서 생성하도록 변경
-
-                        Member initMember = Member.createInitEmailTypeMemberForAuthCode(
-                            email, authCode
-                        );
+                        Member initMember = Member.createInitEmailTypeMemberForAuthCode(email);
+                        AuthCode authCodeEntity = AuthCode.builder().member(initMember).authCode(authCode).build();
+                        initMember.addAuthCoe(authCodeEntity);
                         sendAuthCodeEmail(email, authCode);
                         memberRepository.save(initMember);
                     } else {
@@ -148,22 +148,26 @@ public class AuthService {
                         // 인증 정보를 덮어씌우고 인증 메일 발송
                         // 이미 생성된 member token의 주인은 새롭게 시도하는 사람
                         member.changeToNewAuthCode(authCode);
-                        sendAuthCodeEmail(email, authCode);
                         memberRepository.save(member);
+                        sendAuthCodeEmail(email, authCode);
                     }
                 },
+                // 신규 유저
                 () -> {
-                    Member member = Member.createInitEmailTypeMemberForAuthCode(email, authCode);
-                    sendAuthCodeEmail(email, authCode);
+                    Member member = Member.createInitEmailTypeMemberForAuthCode(email);
+                    AuthCode authCodeEntity = AuthCode.builder().member(member).authCode(authCode).build();
+                    member.addAuthCoe(authCodeEntity);
                     memberRepository.save(member);
+                    sendAuthCodeEmail(email, authCode);
                 });
     }
 
     public boolean getAuthResult(String authCode, String email) {
-        Member member = memberRepository.findByEmail(email)
+        // 인증 후 재 요청하면 NEED CERTIFICATED로 변경?
+        Member member = memberRepository.findByEmailAndStatusIs(email, Status.NEED_CERTIFICATED)
             .orElseThrow(InvalidParamException::new);
 
-        String savedAuthCode = member.getAuthenticationCode();
+        String savedAuthCode = member.getAuthCode().getAuthCode();
 
         if(savedAuthCode.equals(authCode))
             member.emailAuthenticationSuccess();
@@ -269,6 +273,10 @@ public class AuthService {
         try {
             message = createMessage(authCode, email);
         } catch(Exception e) {
+            log.error(e.getMessage());
+            Member storedMember = memberRepository.findByEmailAndStatusIs(email, Status.NEED_CERTIFICATED)
+                .orElseThrow(RuntimeException::new);
+            memberRepository.delete(storedMember);
             throw new RuntimeException(e);
         }
 
