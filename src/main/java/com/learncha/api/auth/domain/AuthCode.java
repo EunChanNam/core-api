@@ -40,6 +40,6 @@ public class AuthCode {
 
     public void changeAuthCode(String authCode) {
         this.authCode = authCode;
-        this.expireTime = LocalDateTime.now().plusDays(1);
+        this.expireTime = LocalDateTime.now().plusDays(1L);
     }
 }

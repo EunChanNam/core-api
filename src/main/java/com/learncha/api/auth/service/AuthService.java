@@ -25,6 +25,7 @@ import com.learncha.api.common.security.jwt.model.JWTManager.JwtTokenBox;
 import com.learncha.api.common.security.jwt.model.JWTManager.TokenVerifyResult;
 import com.learncha.api.common.security.jwt.model.UserDetailsImpl;
 import io.jsonwebtoken.ExpiredJwtException;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.Random;
@@ -167,7 +168,13 @@ public class AuthService {
         Member member = memberRepository.findByEmailAndStatusIs(email, Status.NEED_CERTIFICATED)
             .orElseThrow(InvalidParamException::new);
 
-        String savedAuthCode = member.getAuthCode().getAuthCode();
+        var authCodeEntity = member.getAuthCode();
+        String savedAuthCode = authCodeEntity.getAuthCode();
+
+        var now = LocalDateTime.now();
+
+        if(now.compareTo(authCodeEntity.getExpireTime()) > 0)
+            throw new InvalidParamException("만료된 인증 코드입니다.");
 
         if(savedAuthCode.equals(authCode))
             member.emailAuthenticationSuccess();
