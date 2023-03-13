@@ -151,29 +151,9 @@ public class Member extends TimeStamp {
         this.authenticationCode = authCode;
     }
 
-    public boolean isNeedEmailAuthentication() {
-        return Objects.equals(this.status, Status.NEED_CERTIFICATED);
-    }
-
-    public void setRoleAdmin() {
-        this.authority = MemberRole.ROLE_ADMIN;
-    }
-
-    public void setRoleUser() {
-        this.authority = MemberRole.ROLE_USER;
-    }
-
     public void registerReasonOfWithdrawal(String reason) {
         if(reason == null) throw new InvalidParamException("reason of withdrawal never be null");
         this.reasonWithdrawal = reason;
-    }
-
-    public Member resetToInitMember() {
-        this.password = null;
-        this.reasonWithdrawal = null;
-        this.status = Status.NEED_CERTIFICATED;
-        this.authType = AuthType.EMAIL;
-        return this;
     }
 
     public Member updateMemberInfoFromGoogle(GoogleUserProfile googleUserProfile) {
@@ -198,15 +178,9 @@ public class Member extends TimeStamp {
         this.status = Status.DELETED;
     }
 
-    public void setDeleteReason(String reason) {
-        this.reasonWithdrawal = reason;
-    }
-
     public void emailAuthenticationSuccess() {
         this.status = Status.CERTIFICATED;
     }
-
-    public boolean isCertificated() { return Objects.equals(this.status, Status.CERTIFICATED);}
 
     public boolean isDeleted() { return Objects.equals(this.status, Status.DELETED);}
 
