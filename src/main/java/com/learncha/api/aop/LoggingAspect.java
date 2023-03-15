@@ -32,7 +32,6 @@ public class LoggingAspect {
     @Around(value = "apiLoggingPointCut()")
     public Object reqResLogging(ProceedingJoinPoint joinPoint) throws Throwable {
         var request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
         var parameters = getParameters(request);
         var requestId = (String) request.getAttribute("x-request-id");
         var jsonNode = objectMapper.readTree(request.getInputStream());
