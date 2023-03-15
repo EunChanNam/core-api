@@ -45,7 +45,8 @@ public class LoggingAspect {
 
         var loggingData = objectMapper.writeValueAsString(loggingForm);
 
-        log.info("\n message: {}", loggingData); return joinPoint.proceed();
+        log.info("message: {}", loggingData);
+        return joinPoint.proceed();
     }
 
     private HashMap<Object, Object> getParameters(HttpServletRequest request) {
