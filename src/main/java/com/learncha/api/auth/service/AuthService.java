@@ -24,6 +24,7 @@ import com.learncha.api.common.security.jwt.model.JWTManager;
 import com.learncha.api.common.security.jwt.model.JWTManager.JwtTokenBox;
 import com.learncha.api.common.security.jwt.model.JWTManager.TokenVerifyResult;
 import com.learncha.api.common.security.jwt.model.UserDetailsImpl;
+import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import io.jsonwebtoken.ExpiredJwtException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -211,7 +212,15 @@ public class AuthService {
         deletedReasonBuffer.append(deleteMemberDto.getEtcMsg());
 
         member.onDelete();
+
+        MemberRefreshToken memberRefreshToken = refreshTokenRepository.findByMemberToken(
+            member.getMemberToken()).orElseThrow(InvalidParamException::new);
+
         member.registerReasonOfWithdrawal(deletedReasonBuffer.toString());
+        // todo qa 이후 제거
+
+        refreshTokenRepository.delete(memberRefreshToken);
+        memberRepository.delete(member);
     }
 
     @Transactional

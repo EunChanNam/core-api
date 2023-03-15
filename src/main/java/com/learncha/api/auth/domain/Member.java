@@ -65,7 +65,7 @@ public class Member extends TimeStamp {
     @Column(nullable = true)
     private MemberRole authority;
 
-    @OneToOne(fetch = FetchType.LAZY, mappedBy = "member", cascade = CascadeType.PERSIST)
+    @OneToOne(fetch = FetchType.LAZY, mappedBy = "member", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private AuthCode authCode;
 
     @Getter
