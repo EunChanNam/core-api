@@ -32,15 +32,21 @@ dependencyManagement {
 }
 
 dependencies {
+    //spring
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
     // thymeleaf for email template
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
     implementation 'org.apache.commons:commons-lang3:3.12.0'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.mysql:mysql-connector-j'
     annotationProcessor 'org.projectlombok:lombok'
+
+    // cloud watch
+    implementation "ca.pjer:logback-awslogs-appender:1.6.0"
 
     implementation "com.querydsl:querydsl-jpa:${querydslVersion}"
     annotationProcessor "com.querydsl:querydsl-apt:${querydslVersion}"

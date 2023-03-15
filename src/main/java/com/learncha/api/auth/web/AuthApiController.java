@@ -93,7 +93,6 @@ public class AuthApiController {
     public ResponseEntity<EmailAvailableCheckResponse> isEmailAvailable(
         @RequestParam @NotBlank(message = "이메일은 필수 값입니다.") String email
     ) {
-        log.info("request email: {}", email);
         return ResponseEntity.ok(authService.isAvailableEmail(email));
     }
 
