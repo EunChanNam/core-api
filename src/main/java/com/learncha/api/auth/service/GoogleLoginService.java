@@ -52,7 +52,6 @@ public class GoogleLoginService implements OAuth2UserService<OAuth2UserRequest, 
     }
 
     private Member saveOrUpdate(GoogleUserProfile googleUserProfile) throws OAuth2AuthenticationException {
-        System.out.println("email: " + googleUserProfile.getEmail());
         Member member = memberRepository.findByEmail(googleUserProfile.getEmail())
             .map(storedMember-> storedMember.updateMemberInfoFromGoogle(googleUserProfile))
             .orElse(Member.createGoogleAuthMember(googleUserProfile));

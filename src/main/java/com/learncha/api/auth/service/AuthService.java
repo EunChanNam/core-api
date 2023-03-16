@@ -213,13 +213,7 @@ public class AuthService {
 
         member.onDelete();
 
-        MemberRefreshToken memberRefreshToken = refreshTokenRepository.findByMemberToken(
-            member.getMemberToken()).orElseThrow(InvalidParamException::new);
-
         member.registerReasonOfWithdrawal(deletedReasonBuffer.toString());
-        // todo qa 이후 제거
-
-        refreshTokenRepository.delete(memberRefreshToken);
         memberRepository.delete(member);
     }
 
