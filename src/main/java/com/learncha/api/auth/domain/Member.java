@@ -71,7 +71,7 @@ public class Member extends TimeStamp {
     @Getter
     @RequiredArgsConstructor
     public enum Status {
-        NEED_CERTIFICATED("CERTIFICATED"),
+        NEED_CERTIFICATED("NEED_CERTIFICATED"),
         CERTIFICATED("CERTIFICATED"),
         ACTIVE("ACTIVE"),
         DELETED("DELETED");

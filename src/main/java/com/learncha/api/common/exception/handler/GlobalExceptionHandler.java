@@ -28,26 +28,28 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(InvalidParamException.class)
     public ErrorResponse handleInvalidParamException(InvalidParamException ex) {
+        log.info("message: {}", ex.getMessage());
         return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(EntityNotFoundException.class)
     public ErrorResponse handleEntityNotFoundException(EntityNotFoundException ex) {
+        log.info("message: {}", ex.getMessage());
         return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ErrorResponse handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
-        log.debug(ex.getMessage());
+        log.info("message: {}", ex.getFieldError().getDefaultMessage());
         return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getFieldError());
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(ConstraintViolationException.class)
     public ErrorResponse handleConstraintViolationException(ConstraintViolationException ex) {
-        log.warn(ex.getMessage());
+        log.info("message: {}", ex.getMessage());
         /**
          * ex
          *  error msg: isEmailAvailable.email: 이메일은 필수 값입니다. -> 이메일은 필수 값입니다.
@@ -59,19 +61,21 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(BadCredentialsException.class)
     public ErrorResponse handleBadCredentialException(BadCredentialsException ex) {
-        log.debug(ex.getMessage());
+        log.info("message: {}", ex.getMessage());
         return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(AlreadyAuthenticatedEmail.class)
     public ErrorResponse handleAlreadyAuthenticatedException(AlreadyAuthenticatedEmail ex) {
+        log.info("message: {}", ex.getMessage());
         return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ErrorResponse handleMissingServletRequestParameterException(MissingServletRequestParameterException ex) {
+        log.info("message: {}", ex.getMessage());
         return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
