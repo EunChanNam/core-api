@@ -16,7 +16,7 @@
   <appender name="STDOUT-FOR-PROD" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
       <pattern>
-        %-5level -- [%thread] %logger{35} id=%mdc{x-request-id} %msg %n
+        %-5level--[%thread] %logger{35} id=%mdc{x-request-id} %msg %n
       </pattern>
     </encoder>
   </appender>
