@@ -186,10 +186,10 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public EmailAvailableCheckResponse isAvailableEmail(String email) {
-        Optional<Member> optionalMember = memberRepository.findByEmailAndStatusIsActive(email);
-
-        return optionalMember.map(Member::getEmail)
-            .map(EmailAvailableCheckResponse::unavailable)
+        // email로 member 조회
+        // 조회 결과
+        return memberRepository.findByEmailAndStatusIsActive(email)
+            .map(member -> EmailAvailableCheckResponse.unavailable(member.getEmail(), member.getAuthType()))
             .orElse(EmailAvailableCheckResponse.availableEmail(email));
     }
 

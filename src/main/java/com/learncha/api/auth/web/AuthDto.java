@@ -1,6 +1,7 @@
 package com.learncha.api.auth.web;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.learncha.api.auth.domain.Member.AuthType;
 import com.learncha.api.common.exception.InvalidParamException;
 import com.learncha.api.common.security.jwt.model.JWTManager.JwtTokenBox;
@@ -138,11 +139,14 @@ public class AuthDto {
     public static class EmailAvailableCheckResponse {
         private final String email;
         private final String isDuplicated;
+        @JsonInclude(Include.NON_NULL)
+        private String reason;
 
         @Builder
-        private EmailAvailableCheckResponse(String email, boolean isDuplicated) {
+        private EmailAvailableCheckResponse(String email, boolean isDuplicated, String reason) {
             this.email = email;
             this.isDuplicated = isDuplicated ? "TRUE" : "FALSE";
+            this.reason = reason;
         }
 
         public static EmailAvailableCheckResponse availableEmail(String email) {
@@ -152,10 +156,17 @@ public class AuthDto {
                 .build();
         }
 
-        public static EmailAvailableCheckResponse unavailable(String email) {
+        public static EmailAvailableCheckResponse unavailable(String email, AuthType authType) {
+            String reason = null;
+
+            if(authType.equals(AuthType.GOOGLE)) {
+                reason = "Google Email로 등록된 이메일 입니다.";
+            }
+
             return EmailAvailableCheckResponse.builder()
                 .email(email)
                 .isDuplicated(true)
+                .reason(reason)
                 .build();
         }
     }
