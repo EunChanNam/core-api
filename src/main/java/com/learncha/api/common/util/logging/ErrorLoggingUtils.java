@@ -15,7 +15,8 @@ public class ErrorLoggingUtils {
     public static void baseException(BaseException ex) throws JsonProcessingException {
         var msg = ex.getMessage(); StackTraceElement[] stackTrace = ex.getStackTrace();
         if(stackTrace.length > 0) {
-            StackTraceElement top = stackTrace[0]; log.error("{}", objectMapper.writeValueAsString(
+            StackTraceElement top = stackTrace[0];
+            log.error("{}", objectMapper.writeValueAsString(
                 new ErrorLoggingFormat(
                     msg,
                     String.format(

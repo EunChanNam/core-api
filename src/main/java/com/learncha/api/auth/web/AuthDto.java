@@ -28,7 +28,6 @@ public class AuthDto {
         @Pattern(regexp = "[a-zA-Z0-9]{1,64}@[a-zA-Z0-9_\\-\\.]{1,255}", message = "유효하지 않은 이메일 입니다. 양식을 확인해주세요.")
         @NotBlank(message = "email은 필수 값입니다.")
         private String email;
-
         @Size(min = 8, max = 15, message = "비밀번호는 최소 8자 최대 15자로 설정되어야 합니다.")
         @NotBlank(message = "pasword는 필수 값입니다.")
         private String password;

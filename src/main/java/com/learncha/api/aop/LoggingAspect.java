@@ -34,6 +34,7 @@ public class LoggingAspect {
         var request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         var parameters = getParameters(request);
         var requestId = (String) request.getAttribute("x-request-id");
+        var in = request.getInputStream();
         var jsonNode = objectMapper.readTree(request.getInputStream());
         var httpMethod = request.getMethod();
         var className = joinPoint.getSignature().getDeclaringTypeName();
