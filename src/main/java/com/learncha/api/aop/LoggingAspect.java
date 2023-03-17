@@ -1,19 +1,15 @@
 package com.learncha.api.aop;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.learncha.api.common.util.logging.component.ReqResLoggingForm;
+import com.learncha.api.common.util.logging.component.ReqLoggingForm;
 import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
-import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -40,12 +36,16 @@ public class LoggingAspect {
         var requestId = (String) request.getAttribute("x-request-id");
         var jsonNode = objectMapper.readTree(request.getInputStream());
         var httpMethod = request.getMethod();
+        var className = joinPoint.getSignature().getDeclaringTypeName();
+        var methodName = joinPoint.getSignature().getName();
 
-        var loggingForm = ReqResLoggingForm.builder()
+        var loggingForm = ReqLoggingForm.builder()
             .requestId(requestId)
             .uri(request.getRequestURI())
             .httpMethod(httpMethod)
             .parameters(parameters)
+            .className(className)
+            .methodName(methodName)
             .payload(jsonNode)
             .build();
 
