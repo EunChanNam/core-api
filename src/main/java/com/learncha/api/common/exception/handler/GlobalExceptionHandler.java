@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.learncha.api.common.error.ErrorCode;
 import com.learncha.api.common.error.ErrorResponse;
 import com.learncha.api.common.exception.AlreadyAuthenticatedEmail;
+import com.learncha.api.common.exception.BaseException;
 import com.learncha.api.common.exception.EntityNotFoundException;
 import com.learncha.api.common.exception.InvalidParamException;
 import com.learncha.api.common.util.logging.ErrorLoggingUtils;
@@ -24,28 +25,14 @@ public class GlobalExceptionHandler {
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(Exception.class)
-    public ErrorResponse handleInternalServerError(Exception exception) {
-        ErrorLoggingUtils.error(exception);
+    public ErrorResponse handleInternalServerError(Exception ex) {
+        ErrorLoggingUtils.error(ex);
         return ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.COMMON_SYSTEM_ERROR.getErrorMsg());
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(InvalidParamException.class)
-    public ErrorResponse handleInvalidParamException(InvalidParamException ex) throws JsonProcessingException {
-        ErrorLoggingUtils.baseException(ex);
-        return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage());
-    }
-
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ErrorResponse handleEntityNotFoundException(EntityNotFoundException ex) throws JsonProcessingException {
-        ErrorLoggingUtils.baseException(ex);
-        return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage());
-    }
-
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(AlreadyAuthenticatedEmail.class)
-    public ErrorResponse handleAlreadyAuthenticatedException(AlreadyAuthenticatedEmail ex) throws JsonProcessingException {
+    @ExceptionHandler(BaseException.class)
+    public ErrorResponse handleInvalidParamException(BaseException ex) throws JsonProcessingException {
         ErrorLoggingUtils.baseException(ex);
         return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
@@ -56,7 +43,6 @@ public class GlobalExceptionHandler {
         log.error("", ex);
         return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getFieldError());
     }
-
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(ConstraintViolationException.class)
@@ -77,8 +63,6 @@ public class GlobalExceptionHandler {
         return ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
-
-
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ErrorResponse handleMissingServletRequestParameterException(MissingServletRequestParameterException ex) {
@@ -91,6 +75,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MissingRequestCookieException.class)
     public ErrorResponse handleMissingRequestCookieException(MissingRequestCookieException ex) {
         log.error("", ex);
-        return ErrorResponse.of(HttpStatus.BAD_REQUEST, "access_token 재발급을 위해선 refresh token이 필요합니다.");
+        return ErrorResponse.of(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REFRESH_TOKEN.getErrorMsg());
     }
 }

@@ -7,9 +7,11 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
@@ -30,8 +32,8 @@ public class LoggingAspect {
     @Pointcut("execution(* com.learncha.api.auth.web.*ApiController.*(..))")
     public void apiLoggingPointCut() {}
 
-    @Around(value = "apiLoggingPointCut()")
-    public void reqResLogging(ProceedingJoinPoint joinPoint) throws Throwable {
+    @Before(value = "apiLoggingPointCut()")
+    public void reqResLogging(JoinPoint joinPoint) throws Throwable {
 
         var request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         var parameters = getParameters(request);
@@ -49,13 +51,7 @@ public class LoggingAspect {
 
         var loggingData = objectMapper.writeValueAsString(loggingForm);
 
-        log.info("message: {}", loggingData);
-
-        try {
-            joinPoint.proceed();
-        } catch(Exception ex) {
-            throw ex;
-        }
+        log.info("request: {}", loggingData);
     }
 
     private HashMap<Object, Object> getParameters(HttpServletRequest request) {
