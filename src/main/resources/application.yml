@@ -49,8 +49,8 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
-        show_sql: true
-        format_sql: true
+#        show_sql: true
+#        format_sql: true
 
   mail:
     host: smtp.gmail.com
@@ -73,10 +73,10 @@ spring:
 front:
   endpoint: https://test-fe-pink.vercel.app/
 
-logging:
-  level:
-    com.zaxxer.hikari.pool.HikariPool: debug
-    org.hibernate.type.descriptor.sql: trace
+#logging:
+#  level:
+#    com.zaxxer.hikari.pool.HikariPool: debug
+#    org.hibernate.type.descriptor.sql: trace
 
 aws:
   paramstore:

@@ -30,5 +30,6 @@ public class LoggingFilter extends OncePerRequestFilter {
         response.addHeader(LOGGING_KEY, requestId);
         requestWrapper.setAttribute(LOGGING_KEY, requestId);
         filterChain.doFilter(requestWrapper, response);
+        MDC.clear();
     }
 }

@@ -11,6 +11,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -30,15 +31,18 @@ public class LoggingAspect {
     public void apiLoggingPointCut() {}
 
     @Around(value = "apiLoggingPointCut()")
-    public Object reqResLogging(ProceedingJoinPoint joinPoint) throws Throwable {
+    public void reqResLogging(ProceedingJoinPoint joinPoint) throws Throwable {
+
         var request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         var parameters = getParameters(request);
         var requestId = (String) request.getAttribute("x-request-id");
         var jsonNode = objectMapper.readTree(request.getInputStream());
+        var httpMethod = request.getMethod();
 
         var loggingForm = ReqResLoggingForm.builder()
             .requestId(requestId)
             .uri(request.getRequestURI())
+            .httpMethod(httpMethod)
             .parameters(parameters)
             .payload(jsonNode)
             .build();
@@ -46,7 +50,12 @@ public class LoggingAspect {
         var loggingData = objectMapper.writeValueAsString(loggingForm);
 
         log.info("message: {}", loggingData);
-        return joinPoint.proceed();
+
+        try {
+            joinPoint.proceed();
+        } catch(Exception ex) {
+            throw ex;
+        }
     }
 
     private HashMap<Object, Object> getParameters(HttpServletRequest request) {
