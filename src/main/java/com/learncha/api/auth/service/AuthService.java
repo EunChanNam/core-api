@@ -137,7 +137,8 @@ public class AuthService {
         memberRepository.findByEmail(email)
             .ifPresentOrElse(
                 member -> {
-                    if(member.isActive()) throw new InvalidParamException("이미 가입된 이메일 입니다.");
+                    if(member.isActive())
+                        throw new InvalidParamException("이미 가입된 이메일 입니다.");
                     else if(member.isDeleted()) {
                         // todo 인증코드 발급 객체 생성하여 생성자에서 생성하도록 변경
                         Member initMember = Member.createInitEmailTypeMemberForAuthCode(email);

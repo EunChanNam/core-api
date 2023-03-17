@@ -83,7 +83,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MissingRequestCookieException.class)
     public ErrorResponse handleMissingRequestCookieException(MissingRequestCookieException ex) {
-        log.warn(ex.getMessage());
+        log.info("message: {}", ex.getMessage());
         return ErrorResponse.of(HttpStatus.BAD_REQUEST, "access_token 재발급을 위해선 refresh token이 필요합니다.");
     }
 }
