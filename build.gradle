@@ -79,6 +79,7 @@ tasks.named('test') {
 }
 
 def querydslDir = "$buildDir/generated/core-api"
+
 querydsl {
     jpa = true
     querydslSourcesDir = querydslDir

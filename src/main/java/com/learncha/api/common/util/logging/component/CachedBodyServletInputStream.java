@@ -7,6 +7,7 @@ import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 
 public class CachedBodyServletInputStream extends ServletInputStream {
+
     private final InputStream cachedBodyInputStream;
 
     public CachedBodyServletInputStream(byte[] cachedBody) {
