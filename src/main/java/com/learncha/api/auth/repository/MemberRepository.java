@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface MemberRepository extends JpaRepository<Member, Long>, QueryDslMemberRepository {
-
     Optional<Member> findByEmail(String email);
+    Optional<Member> findByMemberToken(String memberToken);
     boolean existsMemberByEmail(String email);
 }

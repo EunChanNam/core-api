@@ -14,6 +14,9 @@ public class Book {
     @Column(name = "author")
     private String author;
 
+    @Column(name = "title")
+    private String title;
+
     @Column(name = "second_title")
     private String secondTitle;
 
@@ -21,13 +24,14 @@ public class Book {
     private String bookImageUrl;
 
     @Builder
-    public Book(String author, String secondTitle, String bookImageUrl) {
+    public Book(String author, String title, String secondTitle, String bookImageUrl) {
         this.author = author;
+        this.title = title;
         this.secondTitle = secondTitle;
         this.bookImageUrl = bookImageUrl;
     }
 
-    public static Book of(String author, String secondTitle, String bookImageUrl) {
-        return new Book(author, secondTitle, bookImageUrl);
+    public static Book of(String author, String title, String secondTitle, String bookImageUrl) {
+        return new Book(author, title, secondTitle, bookImageUrl);
     }
 }

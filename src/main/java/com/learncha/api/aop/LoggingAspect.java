@@ -25,12 +25,14 @@ public class LoggingAspect {
         this.objectMapper = objectMapper;
     }
 
-    @Pointcut("execution(* com.learncha.api.auth.web.*ApiController.*(..))")
+//    @Pointcut("execution(* com.learncha.api.auth.web.*ApiController.*(..))")
+//    public void apiLoggingPointCut() {}
+
+    @Pointcut("execution(* com.learncha.api.*.web.*ApiController.*(..))")
     public void apiLoggingPointCut() {}
 
     @Before(value = "apiLoggingPointCut()")
     public void reqResLogging(JoinPoint joinPoint) throws Throwable {
-
         var request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         var parameters = getParameters(request);
         var requestId = (String) request.getAttribute("x-request-id");

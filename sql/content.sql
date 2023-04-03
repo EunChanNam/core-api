@@ -17,7 +17,10 @@ create table content
     channel_name        varchar(255) null,
     video_title         varchar(255) null,
     video_url           varchar(255) null,
-    thumbnail_image_url varchar(255) null
+    thumbnail_image_url varchar(255) null,
+    member_id           bigint not null,
+
+    constraint fk_member_id foreign key (member_id) references member (id)
     constraint uq_article_token
         unique (article_token)
 );
